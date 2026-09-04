@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4efe7" />
+  <title>Chao · Comida Asiática</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+  <link rel="stylesheet" href="form-controls.css" />
+  <link rel="stylesheet" href="menu-actions.css" />
+  <link rel="stylesheet" href="order-modal.css" />
+  <link rel="stylesheet" href="order-errors.css" />
+  <link rel="stylesheet" href="payment.css" />
+  <link rel="stylesheet" href="account-menu.css" />
+  <link rel="stylesheet" href="client-picker.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+</head>
+<body>
+  <div class="login-screen" id="login-screen" aria-hidden="true"><div class="login-card"><div class="brand login-brand"><span class="brand-mark">C</span><div><strong>CHAO</strong><span>comida asiática</span></div></div><p class="eyebrow">Acceso privado</p><h1>Bienvenido de nuevo</h1><p class="login-copy">Inicia sesión para administrar pedidos y menú.</p><form id="login-form"><label>Correo electrónico<input type="email" name="email" autocomplete="email" required /></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required /></label><p class="login-error" id="login-error"></p><button class="primary-button full" type="submit"><i data-lucide="log-in"></i>Ingresar</button></form></div></div>
+  <div class="app-shell" id="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand">
+        <span class="brand-mark">C</span>
+        <div><strong>CHAO</strong><span>comida asiática</span></div>
+      </div>
+      <div class="service-status"><span class="status-dot"></span><span>Servicio activo</span><small>20:42</small></div>
+      <nav class="main-nav">
+        <button class="nav-item active" data-view="inicio"><i data-lucide="layout-dashboard"></i><span>Inicio</span></button>
+        <button class="nav-item" data-view="pedidos"><i data-lucide="receipt-text"></i><span>Pedidos</span><b class="nav-count">8</b></button>
+        <button class="nav-item" data-view="clientes"><i data-lucide="users-round"></i><span>Clientes</span></button>
+        <button class="nav-item" data-view="menu"><i data-lucide="utensils"></i><span>Menú</span></button>
+        <button class="nav-item" data-view="estadisticas"><i data-lucide="chart-no-axes-combined"></i><span>Estadísticas</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item"><i data-lucide="settings-2"></i><span>Configuración</span></button>
+        <div class="user-card"><span class="avatar">AM</span><div><strong>Administrador</strong><span>Sesión activa</span></div><i data-lucide="ellipsis"></i></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark">C</span><strong>CHAO</strong></div>
+        <div class="topbar-actions">
+          <button class="icon-button" aria-label="Buscar"><i data-lucide="search"></i></button>
+          <button class="icon-button notification" aria-label="Notificaciones"><i data-lucide="bell"></i><span></span></button>
+          <div class="profile-menu"><button class="profile-chip" data-profile-menu aria-expanded="false"><span class="avatar">AM</span><span>Admin</span><i data-lucide="chevron-down"></i></button><div class="account-dropdown" hidden><strong>Administrador</strong><span>Sesión activa</span><button type="button" data-logout><i data-lucide="log-out"></i>Cerrar sesión</button></div></div>
+        </div>
+      </header>
+
+      <section class="page-view active" id="view-inicio">
+        <div class="page-heading">
+          <div><p class="eyebrow">Miércoles, 03 de septiembre de 2026</p><h1>Buenas noches, Admin <span class="heading-accent">.</span></h1><p class="heading-subtitle">Aquí tienes el pulso de tu restaurante.</p></div>
+          <button class="primary-button" id="new-order-button"><i data-lucide="plus"></i>Nuevo pedido</button>
+        </div>
+        <div class="metric-grid">
+          <article class="metric-card highlight"><div class="metric-top"><span class="metric-label">Pedidos de hoy</span><i data-lucide="receipt"></i></div><strong>48</strong><span class="metric-trend positive"><i data-lucide="trending-up"></i> 12% <em>vs. ayer</em></span></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">Ventas de hoy</span><i data-lucide="banknote"></i></div><strong>Bs 1.245</strong><span class="metric-trend positive"><i data-lucide="trending-up"></i> 8% <em>vs. ayer</em></span></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">Pendientes</span><i data-lucide="clock-3"></i></div><strong id="pending-metric">8</strong><span class="metric-trend neutral">En preparación ahora</span></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-label">Ticket promedio</span><i data-lucide="arrow-up-right"></i></div><strong>Bs 25,94</strong><span class="metric-trend positive"><i data-lucide="trending-up"></i> 4% <em>esta semana</em></span></article>
+        </div>
+        <div class="content-grid">
+          <section class="panel orders-panel"><div class="panel-heading"><div><p class="eyebrow">Operación en vivo</p><h2>Pedidos de hoy <span class="live-pill"><span></span> EN VIVO</span></h2></div><button class="text-button" data-view-link="pedidos">Ver todos <i data-lucide="arrow-up-right"></i></button></div><div class="orders-list" id="orders-list"></div></section>
+          <aside class="panel side-panel"><div class="panel-heading"><div><p class="eyebrow">Vista rápida</p><h2>Resumen del día</h2></div><button class="icon-button small"><i data-lucide="more-horizontal"></i></button></div><div class="donut-wrap"><div class="donut"><div><strong>48</strong><span>pedidos</span></div></div><div class="donut-legend"><span><i class="legend-dot dine"></i>En mesa <b>21</b></span><span><i class="legend-dot take"></i>Para llevar <b>27</b></span></div></div><div class="mini-divider"></div><div class="best-sellers"><div class="mini-title"><span>Más vendidos</span><button class="text-button">Este mes <i data-lucide="chevron-down"></i></button></div><div class="product-rank"><b>01</b><span class="dish-icon">◎</span><div><strong>Arroz Chaufa</strong><small>87 pedidos</small></div><em>+24%</em></div><div class="product-rank"><b>02</b><span class="dish-icon">◌</span><div><strong>Tallarín Salteado</strong><small>64 pedidos</small></div><em>+18%</em></div><div class="product-rank"><b>03</b><span class="dish-icon">◉</span><div><strong>Kung Pao</strong><small>52 pedidos</small></div><em>+11%</em></div></div></aside>
+        </div>
+      </section>
+
+      <section class="page-view" id="view-pedidos"><div class="page-heading compact"><div><p class="eyebrow">Operación</p><h1>Todos los pedidos</h1><p class="heading-subtitle">Actualiza cada ticket a medida que avanza.</p></div><button class="primary-button" id="new-order-button-2"><i data-lucide="plus"></i>Nuevo pedido</button></div><div class="filter-bar"><div class="segmented-control"><button class="active" data-filter="todos">Todos <b>8</b></button><button data-filter="pendiente">Pendientes <b>3</b></button><button data-filter="preparacion">En preparación <b>3</b></button><button data-filter="listo">Listos <b>2</b></button></div><button class="secondary-button"><i data-lucide="calendar-days"></i>03 sep 2026</button></div><div class="orders-board" id="orders-board"></div></section>
+
+      <section class="page-view" id="view-clientes"><div class="page-heading compact"><div><p class="eyebrow">Personas y familias</p><h1>Clientes</h1><p class="heading-subtitle">La memoria de quienes vuelven a tu mesa.</p></div><button class="primary-button" id="new-client-button"><i data-lucide="user-plus"></i>Nuevo cliente</button></div><div class="client-summary"><div><strong>126</strong><span>clientes activos</span></div><div><strong>18</strong><span>familias registradas</span></div><div><strong>Bs 850</strong><span>promedio por familia</span></div></div><div class="panel table-panel"><div class="table-toolbar"><div class="search-field"><i data-lucide="search"></i><input placeholder="Buscar por nombre o teléfono" /></div><button class="secondary-button"><i data-lucide="list-filter"></i>Filtrar</button></div><table><thead><tr><th>Cliente</th><th>Familia</th><th>Relación</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead><tbody><tr><td><div class="table-person"><span class="avatar peach">JP</span><strong>Juan Carlos Pérez Mamani</strong></div></td><td>Familia Pérez</td><td>Hijo</td><td>+591 701 223 44</td><td><span class="status-tag active-tag">Activo</span></td><td><button class="icon-button small"><i data-lucide="ellipsis"></i></button></td></tr><tr><td><div class="table-person"><span class="avatar mint">MP</span><strong>María Pérez Mamani</strong></div></td><td>Familia Pérez</td><td>Madre</td><td>+591 701 223 45</td><td><span class="status-tag active-tag">Activo</span></td><td><button class="icon-button small"><i data-lucide="ellipsis"></i></button></td></tr><tr><td><div class="table-person"><span class="avatar lavender">CG</span><strong>Carlos Gutiérrez</strong></div></td><td>—</td><td>—</td><td>+591 712 089 12</td><td><span class="status-tag inactive-tag">Inactivo</span></td><td><button class="icon-button small"><i data-lucide="ellipsis"></i></button></td></tr></tbody></table></div></section>
+
+      <section class="page-view" id="view-menu"><div class="page-heading compact"><div><p class="eyebrow">Carta digital</p><h1>Menú</h1><p class="heading-subtitle">Platos, bebidas y sus variaciones.</p></div><button class="primary-button"><i data-lucide="plus"></i>Nuevo producto</button></div><div class="menu-tabs"><button class="active">Todos <b>8</b></button><button>Platos <b>5</b></button><button>Bebidas <b>3</b></button><button>Variaciones</button></div><div class="menu-grid"><article class="menu-item-card"><span class="menu-category">PLATO</span><h3>Arroz Chaufa</h3><p>Arroz chaufa</p><strong>Bs 30,00</strong><div class="variation-row"><span>Normal</span></div><button class="edit-button" aria-label="Editar arroz chaufa"><i data-lucide="pencil"></i></button></article><article class="menu-item-card"><span class="menu-category">PLATO</span><h3>Tallarín Salteado</h3><p>Tallarín salteado</p><strong>Bs 18,00</strong><div class="variation-row"><span>Normal</span><span>Picante</span><span>Agridulce</span></div><button class="edit-button" aria-label="Editar tallarín"><i data-lucide="pencil"></i></button></article><article class="menu-item-card"><span class="menu-category">PLATO</span><h3>Chicharrón de Pollo</h3><p>Chicharrón de pollo</p><strong>Bs 25,00</strong><div class="variation-row"><span>Normal</span><span>Picante</span><span>Agridulce</span></div><button class="edit-button" aria-label="Editar chicharrón"><i data-lucide="pencil"></i></button></article><article class="menu-item-card"><span class="menu-category">PLATO</span><h3>Yakisoba</h3><p>Yakisoba</p><strong>Bs 22,00</strong><div class="variation-row"><span>Normal</span><span>Picante</span><span>Agridulce</span></div><button class="edit-button" aria-label="Editar yakisoba"><i data-lucide="pencil"></i></button></article><article class="menu-item-card"><span class="menu-category drink">BEBIDA</span><h3>Coca-Cola</h3><p>Personal 500 ml</p><strong>Bs 7,00</strong><div class="variation-row"><span>Única</span></div><button class="edit-button" aria-label="Editar coca cola"><i data-lucide="pencil"></i></button></article></div></section>
+
+      <section class="page-view" id="view-estadisticas"><div class="page-heading compact"><div><p class="eyebrow">Rendimiento</p><h1>Estadísticas</h1><p class="heading-subtitle">Entiende el ritmo de tu restaurante.</p></div><button class="secondary-button"><i data-lucide="calendar-days"></i>Este mes <i data-lucide="chevron-down"></i></button></div><div class="stats-grid"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow">Ventas</p><h2>Bs 18.420 <span class="chart-up">+14,8%</span></h2></div><span class="chart-period">Últimos 30 días</span></div><div class="chart"><div class="chart-lines"><span></span><span></span><span></span><span></span></div><svg viewBox="0 0 700 190" preserveAspectRatio="none" aria-label="Gráfico de ventas"><path d="M0,155 C35,160 45,130 75,140 S110,110 145,125 S180,90 220,110 S260,100 290,75 S330,95 360,70 S400,85 430,48 S480,80 510,55 S545,68 580,34 S625,57 650,23 S680,30 700,14" fill="none" stroke="#ec765e" stroke-width="4"/><path d="M0,155 C35,160 45,130 75,140 S110,110 145,125 S180,90 220,110 S260,100 290,75 S330,95 360,70 S400,85 430,48 S480,80 510,55 S545,68 580,34 S625,57 650,23 S680,30 700,14 L700,190 L0,190 Z" fill="url(#chartFill)" opacity=".32"/><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ec765e"/><stop offset="1" stop-color="#ec765e" stop-opacity="0"/></linearGradient></defs></svg><div class="chart-labels"><span>05 ago</span><span>12 ago</span><span>19 ago</span><span>26 ago</span><span>03 sep</span></div></div></div><div class="panel stats-list"><div class="panel-heading"><div><p class="eyebrow">Preferencias</p><h2>Variaciones</h2></div><i data-lucide="flame" class="coral-icon"></i></div><div class="progress-item"><div><span>Normal</span><b>156</b></div><div class="progress-track"><i style="width: 82%"></i></div></div><div class="progress-item"><div><span>Picante</span><b>82</b></div><div class="progress-track"><i style="width: 52%"></i></div></div><div class="progress-item"><div><span>Agridulce</span><b>41</b></div><div class="progress-track"><i style="width: 28%"></i></div></div></div></div></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="order-modal" aria-hidden="true"><div class="modal"><button class="modal-close" aria-label="Cerrar"><i data-lucide="x"></i></button><p class="eyebrow">Nuevo ticket</p><h2>Registrar pedido</h2><form id="order-form"><label>Cliente<select><option>Juan Carlos Pérez Mamani</option><option>María Pérez Mamani</option><option>Cliente ocasional</option></select></label><label>Tipo de pedido<select><option>Para llevar</option><option>En mesa</option></select></label><label class="payment-check"><input type="checkbox" name="pagado" /> Pedido pagado</label><label>Notas<textarea placeholder="Detalles para cocina (opcional)"></textarea></label><button class="primary-button full" type="submit"><i data-lucide="check"></i>Crear pedido</button></form></div></div>
+  <div class="modal-backdrop" id="product-modal" aria-hidden="true"><div class="modal"><button class="modal-close" data-close-product aria-label="Cerrar"><i data-lucide="x"></i></button><p class="eyebrow">Carta</p><h2 id="product-modal-title">Nuevo producto</h2><form id="product-form"><input type="hidden" name="id" /><label>Nombre<input name="nombre" required /></label><label>Descripción<textarea name="descripcion"></textarea></label><div class="form-row"><label>Precio (Bs)<input name="precio" type="number" min="0" step="0.01" required /></label><label>Tipo<select name="tipo"><option value="PLATO">Plato</option><option value="BEBIDA">Bebida</option></select></label></div><label>Categoría<select name="categoria" id="product-category"><option value="">Sin categoría</option></select></label><label class="checkbox-label"><input name="activo" type="checkbox" checked /> Disponible para vender</label><button class="primary-button full" type="submit"><i data-lucide="check"></i>Guardar producto</button></form></div></div>
+  <div class="modal-backdrop" id="client-modal" aria-hidden="true"><div class="modal"><button class="modal-close" data-close-client aria-label="Cerrar"><i data-lucide="x"></i></button><p class="eyebrow">Personas</p><h2 id="client-modal-title">Nuevo cliente</h2><form id="client-form"><input type="hidden" name="id" /><label>Nombres<input name="nombres" required /></label><label>Apellidos<input name="apellidos" required /></label><label>Teléfono (opcional)<input name="telefono" /></label><div class="form-row"><label>Familia (opcional)<select name="familia"><option value="">Sin familia</option></select></label><label>Relación (opcional)<input name="relacion_familiar" placeholder="Ej. Madre" /></label></div><label class="checkbox-label"><input name="activo" type="checkbox" checked /> Cliente activo</label><button class="primary-button full" type="submit"><i data-lucide="check"></i>Guardar cliente</button><button class="secondary-button full client-close-button" type="button" data-deactivate-client hidden><i data-lucide="user-round-minus"></i>Cerrar cliente</button></form></div></div>
+  <div class="toast" id="toast"><i data-lucide="check-circle-2"></i><span>Pedido actualizado</span></div>
+  <script src="app.js"></script>
+</body>
+</html>
