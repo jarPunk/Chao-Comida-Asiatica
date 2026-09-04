@@ -15,6 +15,40 @@ let variations = [];
 const defaultPreparations = ['Normal', 'Picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
 
+function updateCurrentDate() {
+  const now = new Date();
+  const longDate = new Intl.DateTimeFormat('es-BO', {
+    timeZone: 'America/La_Paz',
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(now);
+  const shortDate = new Intl.DateTimeFormat('es-BO', {
+    timeZone: 'America/La_Paz',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(now).replace('.', '');
+  const dateLabel = document.querySelector('#current-date-label');
+  const ordersDateLabel = document.querySelector('#orders-date-label');
+  if (dateLabel) dateLabel.textContent = longDate.charAt(0).toUpperCase() + longDate.slice(1);
+  if (ordersDateLabel) ordersDateLabel.append(document.createTextNode(shortDate));
+}
+
+function getBoliviaDayRange() {
+  const boliviaDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/La_Paz',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+  const start = new Date(`${boliviaDate}T00:00:00-04:00`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
 function preparationNames(product) {
   const saved = product.producto_variaciones?.map((item) => item.variaciones?.nombre).filter(Boolean) || [];
   if (saved.length) return saved;
@@ -51,9 +85,12 @@ function mapOrder(row) {
 
 async function loadOrders() {
   if (!supabaseClient || !isAuthenticated) return;
+  const { start, end } = getBoliviaDayRange();
   const { data, error } = await supabaseClient
     .from('pedidos')
     .select('id, numero_ticket, tipo_pedido, estado, estado_pago, total, created_at, clientes(nombres, apellidos), mesas(numero), detalle_pedido(cantidad, productos(nombre), variaciones(nombre))')
+    .gte('created_at', start)
+    .lt('created_at', end)
     .order('created_at', { ascending: false });
   if (error) { showToast('No se pudieron cargar los pedidos'); console.error(error); return; }
   orders = (data || []).map(mapOrder);
@@ -628,6 +665,7 @@ document.querySelector('#login-form').addEventListener('submit', async (event) =
   if (error) errorElement.textContent = 'Correo o contraseña incorrectos.';
 });
 
+updateCurrentDate();
 renderHomeOrders();
 renderClients();
 renderProducts();
