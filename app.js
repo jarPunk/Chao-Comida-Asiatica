@@ -12,6 +12,7 @@ let products = [];
 let clients = [];
 let families = [];
 let variations = [];
+let menuFilter = 'todos';
 const defaultPreparations = ['Normal', 'Picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
 
@@ -116,7 +117,14 @@ function renderProducts() {
     menuButtons[1].innerHTML = `Platos <b>${products.filter((product) => product.tipo === 'PLATO').length}</b>`;
     menuButtons[2].innerHTML = `Bebidas <b>${products.filter((product) => product.tipo === 'BEBIDA').length}</b>`;
   }
-  grid.innerHTML = products.length ? products.map(productMarkup).join('') : '<div class="empty-state"><i data-lucide="utensils"></i><strong>Tu menú está vacío</strong><span>Crea tu primer plato o bebida.</span></div>';
+  const filteredProducts = products.filter((product) => {
+    if (menuFilter === 'platos') return product.tipo === 'PLATO';
+    if (menuFilter === 'bebidas') return product.tipo === 'BEBIDA';
+    if (menuFilter === 'variaciones') return product.tipo === 'PLATO' && preparationNames(product).length > 1;
+    return true;
+  });
+  menuButtons.forEach((button, index) => button.classList.toggle('active', ['todos', 'platos', 'bebidas', 'variaciones'][index] === menuFilter));
+  grid.innerHTML = filteredProducts.length ? filteredProducts.map(productMarkup).join('') : '<div class="empty-state"><i data-lucide="utensils"></i><strong>No hay productos en este filtro</strong><span>Prueba con otra categoría del menú.</span></div>';
   refreshIcons();
 }
 
@@ -529,6 +537,12 @@ document.addEventListener('click', (event) => {
   if (event.target.closest('#new-order-button, #new-order-button-2')) openModal();
   if (event.target.closest('#new-client-button')) openClientModal();
   if (event.target.closest('#view-menu .primary-button')) openProductModal();
+  const menuButton = event.target.closest('#view-menu .menu-tabs button');
+  if (menuButton) {
+    const menuButtons = [...document.querySelectorAll('#view-menu .menu-tabs button')];
+    menuFilter = ['todos', 'platos', 'bebidas', 'variaciones'][menuButtons.indexOf(menuButton)] || 'todos';
+    renderProducts();
+  }
   if (event.target.closest('.add-size')) {
     const editor = event.target.closest('[data-sizes-field]').querySelector('.sizes-editor');
     editor.insertAdjacentHTML('beforeend', sizeRowsMarkup([{ nombre: '', precio: 0 }]));
