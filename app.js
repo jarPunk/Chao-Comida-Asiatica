@@ -128,11 +128,19 @@ function readSizeRows() {
   return [...document.querySelectorAll('#product-form .size-row')].map((row) => ({ nombre: row.querySelector('.size-name').value.trim(), precio: Number(row.querySelector('.size-price').value) })).filter((size) => size.nombre && size.precio >= 0);
 }
 
+function updateProductTypeFields(form) {
+  const sizesField = form.querySelector('[data-sizes-field]');
+  if (!sizesField) return;
+  const isDrink = form.elements.tipo.value === 'BEBIDA';
+  sizesField.hidden = isDrink;
+  sizesField.style.display = isDrink ? 'none' : 'grid';
+}
+
 async function loadProducts() {
   if (!supabaseClient || !isAuthenticated) return;
   products = [];
   renderProducts();
-  const { data, error } = await supabaseClient.from('productos').select('id, nombre, descripcion, precio, tipo, activo, categoria_id, producto_tamanos(id, nombre, precio, activo)').order('nombre');
+  const { data, error } = await supabaseClient.from('productos').select('id, nombre, descripcion, precio, tipo, activo, producto_tamanos(id, nombre, precio, activo)').order('nombre');
   if (error) { showToast('No se pudo cargar el menú'); console.error(error); return; }
   products = data || [];
   const variationResponse = await supabaseClient.from('producto_variaciones').select('producto_id, variacion_id, variaciones(id, nombre)');
@@ -242,7 +250,7 @@ function openProductModal(product = null) {
   if (!sizesField) {
     sizesField = document.createElement('label');
     sizesField.dataset.sizesField = 'true';
-    sizesField.innerHTML = 'Tamaños y precios <div class="sizes-editor"></div><button type="button" class="secondary-button add-size"><i data-lucide="plus"></i>Añadir tamaño</button><span class="preparation-label">Preparaciones permitidas</span><div class="preparations-editor"></div>';
+    sizesField.innerHTML = '<span class="field-title">Tamaños y precios</span><div class="sizes-editor"></div><button type="button" class="secondary-button add-size"><i data-lucide="plus"></i>Añadir tamaño</button><span class="preparation-label">Preparaciones permitidas</span><div class="preparations-editor"></div>';
     form.insertBefore(sizesField, form.querySelector('.checkbox-label'));
   }
   sizesField.querySelector('.sizes-editor').innerHTML = sizeRowsMarkup(product?.producto_tamanos || []);
@@ -252,6 +260,7 @@ function openProductModal(product = null) {
   sizesField.querySelector('.sizes-editor').hidden = isDrink;
   sizesField.querySelector('.preparation-label').hidden = isDrink;
   sizesField.querySelector('.preparations-editor').hidden = isDrink;
+  updateProductTypeFields(form);
   const allowed = product ? allowedPreparationIds(product) : variations.filter((variation) => !onlyNormalProducts.includes(form.elements.nombre.value.trim()) || variation.nombre === 'Normal').map((variation) => variation.id);
   sizesField.querySelector('.preparations-editor').innerHTML = variations.map((variation) => `<label class="preparation-option"><input type="checkbox" value="${variation.id}" ${allowed.includes(variation.id) ? 'checked' : ''} />${variation.nombre}</label>`).join('');
   if (product && ['Arroz Chaufa', 'Kung Pao'].includes(product.nombre)) {
@@ -390,12 +399,16 @@ async function initAuth() {
   const { data } = await supabaseClient.auth.getSession();
   isAuthenticated = Boolean(data.session);
   setAuthUI(isAuthenticated);
-  if (isAuthenticated) { await loadOrders(); await loadProducts(); }
-  if (isAuthenticated) await loadClients();
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  if (isAuthenticated) await loadAuthenticatedData();
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
     isAuthenticated = Boolean(session);
     setAuthUI(isAuthenticated);
+    if (event === 'SIGNED_IN' && isAuthenticated) await loadAuthenticatedData();
   });
+}
+
+async function loadAuthenticatedData() {
+  await Promise.all([loadOrders(), loadProducts(), loadClients()]);
 }
 
 function orderMarkup(order, compact = false) {
@@ -558,6 +571,7 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('change', (event) => {
+  if (event.target.matches('#product-form [name="tipo"]')) updateProductTypeFields(event.target.form);
   if (!event.target.matches('.order-product')) return;
   const product = products.find((item) => String(item.id) === event.target.value);
   const sizeControl = document.querySelector('[data-size-control]');
