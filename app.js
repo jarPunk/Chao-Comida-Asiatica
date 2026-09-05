@@ -13,8 +13,18 @@ let clients = [];
 let families = [];
 let variations = [];
 let menuFilter = 'todos';
+let selectedOrdersDate = '';
 const defaultPreparations = ['Normal', 'Picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
+
+function getBoliviaDateValue(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/La_Paz',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+}
 
 function updateCurrentDate() {
   const now = new Date();
@@ -32,19 +42,14 @@ function updateCurrentDate() {
     year: 'numeric'
   }).format(now).replace('.', '');
   const dateLabel = document.querySelector('#current-date-label');
-  const ordersDateLabel = document.querySelector('#orders-date-label');
+  const ordersDatePicker = document.querySelector('#orders-date-picker');
+  selectedOrdersDate = selectedOrdersDate || getBoliviaDateValue(now);
   if (dateLabel) dateLabel.textContent = longDate.charAt(0).toUpperCase() + longDate.slice(1);
-  if (ordersDateLabel) ordersDateLabel.append(document.createTextNode(shortDate));
+  if (ordersDatePicker) ordersDatePicker.value = selectedOrdersDate;
 }
 
-function getBoliviaDayRange() {
-  const boliviaDate = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/La_Paz',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date());
-  const start = new Date(`${boliviaDate}T00:00:00-04:00`);
+function getBoliviaDayRange(dateValue = selectedOrdersDate || getBoliviaDateValue()) {
+  const start = new Date(`${dateValue}T00:00:00-04:00`);
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
   return { start: start.toISOString(), end: end.toISOString() };
@@ -86,6 +91,7 @@ function mapOrder(row) {
 
 async function loadOrders() {
   if (!supabaseClient || !isAuthenticated) return;
+  selectedOrdersDate = selectedOrdersDate || getBoliviaDateValue();
   const { start, end } = getBoliviaDayRange();
   const { data, error } = await supabaseClient
     .from('pedidos')
@@ -586,6 +592,11 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('change', (event) => {
   if (event.target.matches('#product-form [name="tipo"]')) updateProductTypeFields(event.target.form);
+  if (event.target.matches('#orders-date-picker')) {
+    selectedOrdersDate = event.target.value || getBoliviaDateValue();
+    loadOrders();
+    return;
+  }
   if (!event.target.matches('.order-product')) return;
   const product = products.find((item) => String(item.id) === event.target.value);
   const sizeControl = document.querySelector('[data-size-control]');
