@@ -14,7 +14,8 @@ let families = [];
 let variations = [];
 let menuFilter = 'todos';
 let selectedOrdersDate = '';
-const defaultPreparations = ['Normal', 'Picante', 'Agridulce'];
+let initialLoadDone = false;
+const defaultPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
 
 function getBoliviaDateValue(date = new Date()) {
@@ -35,12 +36,6 @@ function updateCurrentDate() {
     month: 'long',
     year: 'numeric'
   }).format(now);
-  const shortDate = new Intl.DateTimeFormat('es-BO', {
-    timeZone: 'America/La_Paz',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }).format(now).replace('.', '');
   const dateLabel = document.querySelector('#current-date-label');
   const ordersDatePicker = document.querySelector('#orders-date-picker');
   selectedOrdersDate = selectedOrdersDate || getBoliviaDateValue(now);
@@ -111,7 +106,11 @@ function productMarkup(product) {
   const sizes = isDrink ? [] : product.producto_tamanos || [];
   const preparations = isDrink ? [] : preparationNames(product);
   const sizeMarkup = sizes.map((size) => `<span>${size.nombre}: Bs ${Number(size.precio).toFixed(2)}</span>`).join('') || `<span>Bs ${Number(product.precio || 0).toFixed(2)}</span>`;
-  return `<article class="menu-item-card"><span class="menu-category ${isDrink ? 'drink' : ''}">${product.tipo}</span><h3>${product.nombre}</h3><p>${product.descripcion || 'Sin descripción'}</p><strong>${product.activo ? 'Disponible' : 'No disponible'}</strong><div class="variation-row">${sizeMarkup}</div>${!isDrink ? `<div class="preparation-list">${preparations.join(' · ') || 'Sin preparación definida'}</div>` : ''}<div class="menu-actions"><button class="edit-button" data-edit-product="${product.id}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i></button><button class="delete-item-button" data-delete-product="${product.id}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></article>`;
+  const prepMarkup = preparations.map((p) => {
+    const slug = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+    return `<span class="prep-badge prep-${slug}">${p}</span>`;
+  }).join('') || '<span class="prep-badge">Sin preparación definida</span>';
+  return `<article class="menu-item-card"><span class="menu-category ${isDrink ? 'drink' : ''}">${product.tipo}</span><h3>${product.nombre}</h3><p>${product.descripcion || 'Sin descripción'}</p><strong>${product.activo ? 'Disponible' : 'No disponible'}</strong><div class="variation-row">${sizeMarkup}</div>${!isDrink ? `<div class="preparation-list">${prepMarkup}</div>` : ''}<div class="menu-actions"><button class="edit-button" data-edit-product="${product.id}" title="Editar ${product.nombre}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i></button><button class="delete-item-button" data-delete-product="${product.id}" title="Eliminar ${product.nombre}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></article>`;
 }
 
 function renderProducts() {
@@ -152,31 +151,50 @@ function updateProductTypeFields(form) {
 
 async function loadProducts() {
   if (!supabaseClient || !isAuthenticated) return;
-  products = [];
-  renderProducts();
-  const { data, error } = await supabaseClient.from('productos').select('id, nombre, descripcion, precio, tipo, activo, producto_tamanos(id, nombre, precio, activo)').order('nombre');
-  if (error) { showToast('No se pudo cargar el menú'); console.error(error); return; }
-  products = data || [];
-  const variationResponse = await supabaseClient.from('producto_variaciones').select('producto_id, variacion_id, variaciones(id, nombre)');
-  if (!variationResponse.error) products.forEach((product) => { product.producto_variaciones = variationResponse.data.filter((item) => item.producto_id === product.id); });
-  const catalogResponse = await supabaseClient.from('variaciones').select('id, nombre').eq('activa', true).order('id');
-  variations = catalogResponse.data || [];
-  if (!variations.length && !variationResponse.error) {
-    variations = variationResponse.data.map((item) => item.variaciones).filter(Boolean).filter((variation, index, list) => list.findIndex((item) => item.id === variation.id) === index);
+  try {
+    const [prodRes, varRes, catRes] = await Promise.all([
+      supabaseClient.from('productos').select('id, nombre, descripcion, precio, tipo, activo, producto_tamanos(id, nombre, precio, activo)').order('nombre'),
+      supabaseClient.from('producto_variaciones').select('producto_id, variacion_id, variaciones(id, nombre)'),
+      supabaseClient.from('variaciones').select('id, nombre').eq('activa', true).order('id')
+    ]);
+
+    if (prodRes.error) throw prodRes.error;
+    products = prodRes.data || [];
+    if (!varRes.error && varRes.data) {
+      products.forEach((product) => {
+        product.producto_variaciones = varRes.data.filter((item) => item.producto_id === product.id);
+      });
+    }
+    variations = catRes.data || [];
+    if (!variations.length && !varRes.error && varRes.data) {
+      variations = varRes.data.map((item) => item.variaciones).filter(Boolean).filter((v, i, list) => list.findIndex((x) => x.id === v.id) === i);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('No se pudo cargar el menú');
+  } finally {
+    renderProducts();
+    renderOrderProductOptions();
   }
-  renderProducts();
-  renderOrderProductOptions();
 }
 
 async function loadClients() {
   if (!supabaseClient || !isAuthenticated) return;
-  const { data, error } = await supabaseClient.from('clientes').select('id, nombres, apellidos, telefono, familia_id, relacion_familiar, activo, created_at').order('apellidos');
-  if (error) { console.error(error); return; }
-  clients = data || [];
-  const familyResponse = await supabaseClient.from('familias').select('id, nombre').order('nombre');
-  families = familyResponse.data || [];
-  renderClientPicker();
-  renderClients();
+  try {
+    const [cliRes, famRes] = await Promise.all([
+      supabaseClient.from('clientes').select('id, nombres, apellidos, telefono, familia_id, relacion_familiar, activo, created_at').order('apellidos'),
+      supabaseClient.from('familias').select('id, nombre').order('nombre')
+    ]);
+    if (cliRes.error) throw cliRes.error;
+    clients = cliRes.data || [];
+    families = famRes.data || [];
+  } catch (err) {
+    console.error(err);
+    showToast('No se pudieron cargar los clientes');
+  } finally {
+    renderClientPicker();
+    renderClients();
+  }
 }
 
 function renderClientPicker() {
@@ -185,31 +203,31 @@ function renderClientPicker() {
   picker.querySelector('.client-results').innerHTML = '<button type="button" data-client-id="">Cliente ocasional</button>' + clients.filter((client) => client.activo).map((client) => `<button type="button" data-client-id="${client.id}"><strong>${client.nombres} ${client.apellidos}</strong><small>${client.telefono || 'Sin celular registrado'}</small></button>`).join('');
 }
 
-  function setupClientSearch() {
-    const form = document.querySelector('#order-form');
-    if (!form || form.querySelector('[data-client-picker]')) return;
-    const clientLabel = form.querySelector('label');
-    const picker = document.createElement('div');
-    picker.dataset.clientPicker = 'true';
-    picker.className = 'client-picker';
-    picker.innerHTML = '<input type="search" data-client-search placeholder="Buscar nombre o celular" autocomplete="off" /><input type="hidden" name="cliente_id" value="" /><div class="client-results"></div>';
-    clientLabel.replaceChildren(document.createTextNode('Cliente'), picker);
-    const search = picker.querySelector('[data-client-search]');
-    search.addEventListener('focus', () => picker.querySelector('.client-results').classList.add('open'));
-    search.addEventListener('input', (event) => {
-      const term = event.target.value.trim().toLowerCase();
-      picker.querySelector('.client-results').classList.add('open');
-      picker.querySelectorAll('.client-results button').forEach((button) => { button.hidden = Boolean(term) && !button.textContent.toLowerCase().includes(term); });
-    });
-    picker.querySelector('.client-results').addEventListener('click', (event) => {
-      const option = event.target.closest('[data-client-id]');
-      if (!option) return;
-      picker.querySelector('[name="cliente_id"]').value = option.dataset.clientId;
-      search.value = option.dataset.clientId ? option.querySelector('strong').textContent : '';
-      picker.querySelector('.client-results').classList.remove('open');
-    });
-    renderClientPicker();
-  }
+function setupClientSearch() {
+  const form = document.querySelector('#order-form');
+  if (!form || form.querySelector('[data-client-picker]')) return;
+  const clientLabel = form.querySelector('label');
+  const picker = document.createElement('div');
+  picker.dataset.clientPicker = 'true';
+  picker.className = 'client-picker';
+  picker.innerHTML = '<input type="search" data-client-search placeholder="Buscar nombre o celular" autocomplete="off" /><input type="hidden" name="cliente_id" value="" /><div class="client-results"></div>';
+  clientLabel.replaceChildren(document.createTextNode('Cliente'), picker);
+  const search = picker.querySelector('[data-client-search]');
+  search.addEventListener('focus', () => picker.querySelector('.client-results').classList.add('open'));
+  search.addEventListener('input', (event) => {
+    const term = event.target.value.trim().toLowerCase();
+    picker.querySelector('.client-results').classList.add('open');
+    picker.querySelectorAll('.client-results button').forEach((button) => { button.hidden = Boolean(term) && !button.textContent.toLowerCase().includes(term); });
+  });
+  picker.querySelector('.client-results').addEventListener('click', (event) => {
+    const option = event.target.closest('[data-client-id]');
+    if (!option) return;
+    picker.querySelector('[name="cliente_id"]').value = option.dataset.clientId;
+    search.value = option.dataset.clientId ? option.querySelector('strong').textContent : '';
+    picker.querySelector('.client-results').classList.remove('open');
+  });
+  renderClientPicker();
+}
 
 function renderClients() {
   const clientView = document.querySelector('#view-clientes');
@@ -218,7 +236,21 @@ function renderClients() {
   const active = clients.filter((client) => client.activo).length;
   clientView.querySelector('.client-summary > div:first-child strong').textContent = active;
   clientView.querySelector('.client-summary > div:nth-child(2) strong').textContent = new Set(clients.filter((client) => client.familia_id).map((client) => client.familia_id)).size;
-  body.innerHTML = clients.length ? clients.map((client) => `<tr><td><div class="table-person"><span class="avatar peach">${client.nombres[0] || ''}${client.apellidos[0] || ''}</span><strong>${client.nombres} ${client.apellidos}</strong></div></td><td>${families.find((family) => family.id === client.familia_id)?.nombre || '—'}</td><td>${client.relacion_familiar || '—'}</td><td>${client.telefono || '—'}</td><td><span class="status-tag ${client.activo ? 'active-tag' : 'inactive-tag'}">${client.activo ? 'Activo' : 'Inactivo'}</span></td><td><button class="icon-button small" data-edit-client="${client.id}" aria-label="Editar cliente"><i data-lucide="ellipsis"></i></button></td></tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><strong>No hay clientes registrados</strong><span>Registra el primero para empezar.</span></div></td></tr>';
+  body.innerHTML = clients.length
+    ? clients.map((client) => `<tr>
+        <td><div class="table-person"><span class="avatar peach">${(client.nombres[0] || '').toUpperCase()}${(client.apellidos[0] || '').toUpperCase()}</span><strong>${client.nombres} ${client.apellidos}</strong></div></td>
+        <td>${families.find((family) => family.id === client.familia_id)?.nombre || '—'}</td>
+        <td>${client.relacion_familiar || '—'}</td>
+        <td>${client.telefono || '—'}</td>
+        <td><span class="status-tag ${client.activo ? 'active-tag' : 'inactive-tag'}">${client.activo ? 'Activo' : 'Inactivo'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-action" data-edit-client="${client.id}" title="Editar cliente" aria-label="Editar cliente"><i data-lucide="pencil"></i></button>
+            <button class="btn-action danger" data-delete-client="${client.id}" title="Eliminar permanentemente" aria-label="Eliminar cliente"><i data-lucide="trash-2"></i></button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6"><div class="empty-state"><i data-lucide="users"></i><strong>No hay clientes registrados</strong><span>Registra el primero para empezar.</span></div></td></tr>';
   refreshIcons();
 }
 
@@ -235,19 +267,41 @@ function openClientModal(client = null) {
   form.elements.activo.checked = client?.activo ?? true;
   document.querySelector('#client-modal-title').textContent = client ? 'Editar cliente' : 'Nuevo cliente';
   const deactivate = document.querySelector('[data-deactivate-client]');
-  deactivate.hidden = !client || !client.activo;
+  const deletePerm = document.querySelector('[data-delete-client-perm]');
+  if (deactivate) deactivate.hidden = !client || !client.activo;
+  if (deletePerm) deletePerm.hidden = !client;
   document.querySelector('#client-modal').classList.add('open');
 }
 
 function closeClientModal() { document.querySelector('#client-modal').classList.remove('open'); }
 
 async function deactivateClient(id) {
-  if (!window.confirm('¿Cerrar este cliente? Se conservará su historial.')) return;
+  if (!window.confirm('¿Cerrar/Desactivar este cliente? Se conservará su historial.')) return;
   const { error } = await supabaseClient.from('clientes').update({ activo: false, updated_at: new Date().toISOString() }).eq('id', id);
-  if (error) { showToast('No se pudo cerrar el cliente'); console.error(error); return; }
+  if (error) { showToast('No se pudo desactivar el cliente'); console.error(error); return; }
   closeClientModal();
   await loadClients();
-  showToast('Cliente cerrado');
+  showToast('Cliente desactivado');
+}
+
+async function deleteClientPermanently(id) {
+  const client = clients.find((c) => String(c.id) === String(id));
+  const name = client ? `${client.nombres} ${client.apellidos}` : 'este cliente';
+  if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente a "${name}" de la base de datos?\n\nEsta acción no se puede deshacer.`)) return;
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
+  if (error) {
+    console.error(error);
+    if (error.code === '23503' || error.message?.includes('foreign key constraint')) {
+      alert(`No se puede eliminar permanentemente a "${name}" porque tiene pedidos asociados en la base de datos.\n\nPuedes marcarlo como "Inactivo" en su lugar.`);
+    } else {
+      showToast('No se pudo eliminar el cliente. Revisa las políticas de permisos RLS.');
+    }
+    return;
+  }
+  closeClientModal();
+  await loadClients();
+  showToast('Cliente eliminado permanentemente');
 }
 
 function openProductModal(product = null) {
@@ -306,12 +360,16 @@ function closeProductModal() {
 }
 
 async function deleteProduct(id) {
-  if (!supabaseClient || !window.confirm('¿Seguro que quieres eliminar este producto?')) return;
+  const product = products.find((p) => String(p.id) === String(id));
+  const name = product ? product.nombre : 'este producto';
+  if (!supabaseClient || !window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${name}" del menú?\n\nEsta acción eliminará sus precios y variaciones.`)) return;
+  await supabaseClient.from('producto_tamanos').delete().eq('producto_id', id);
+  await supabaseClient.from('producto_variaciones').delete().eq('producto_id', id);
   const { error } = await supabaseClient.from('productos').delete().eq('id', id);
   if (error) { showProductError('No se pudo eliminar el producto. Revisa los permisos RLS.'); console.error(error); return; }
   closeProductModal();
   await loadProducts();
-  showToast('Producto eliminado');
+  showToast('Producto eliminado del menú');
 }
 
 function showProductError(message) {
@@ -334,7 +392,7 @@ function addOrderBuilder(form) {
   const field = document.createElement('div');
   field.dataset.orderItems = 'true';
   field.className = 'order-items-builder';
-    field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
+  field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
   form.insertBefore(field, form.querySelector('label:last-of-type'));
   renderOrderProductOptions();
   refreshIcons();
@@ -347,10 +405,25 @@ function renderOrderProductOptions() {
   select.innerHTML = '<option value="">Selecciona un producto</option><optgroup label="Platos">' + activeProducts.filter((product) => product.tipo === 'PLATO').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup><optgroup label="Bebidas / refrescos">' + activeProducts.filter((product) => product.tipo === 'BEBIDA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup>';
 }
 
+function ensureDefaultVariations() {
+  defaultPreparations.forEach((name) => {
+    if (!variations.some((v) => v.nombre.toLowerCase() === name.toLowerCase())) {
+      variations.push({ id: name, nombre: name });
+    }
+  });
+}
+
 function preparationOptions(product) {
-  const allowedIds = allowedPreparationIds(product);
-  const available = allowedIds.map((id) => variations.find((variation) => variation.id === id)).filter(Boolean);
-  return available.length ? available : defaultPreparations.filter((name) => !onlyNormalProducts.includes(product.nombre) || name === 'Normal').map((name) => ({ id: name, nombre: name }));
+  if (onlyNormalProducts.includes(product.nombre)) {
+    return [{ id: 'Normal', nombre: 'Normal' }];
+  }
+  
+  ensureDefaultVariations();
+
+  return defaultPreparations.map((name) => {
+    const found = variations.find((v) => v.nombre.toLowerCase() === name.toLowerCase());
+    return found || { id: name, nombre: name };
+  });
 }
 
 function addSelectedOrderItem() {
@@ -361,14 +434,14 @@ function addSelectedOrderItem() {
   const size = product.producto_tamanos?.find((item) => String(item.id) === sizeSelect.value);
   const preparationSelect = document.querySelector('.order-preparation');
   const preparation = onlyNormalProducts.includes(product.nombre)
-    ? variations.find((item) => item.nombre === 'Normal')
-    : variations.find((item) => String(item.id) === preparationSelect.value) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
+    ? { id: 'Normal', nombre: 'Normal' }
+    : variations.find((item) => String(item.id) === preparationSelect.value || item.nombre === preparationSelect.options[preparationSelect.selectedIndex]?.textContent) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
   const quantity = Number(document.querySelector('.order-quantity').value) || 1;
   const item = document.createElement('div');
   item.className = 'selected-order-item';
   item.dataset.productId = product.id;
   item.dataset.sizeId = size?.id || '';
-  item.dataset.variationId = product.tipo === 'BEBIDA' ? '' : Number.isInteger(preparation?.id) ? preparation.id : '';
+  item.dataset.variationId = product.tipo === 'BEBIDA' ? '' : preparation?.id || '';
   item.dataset.quantity = quantity;
   item.dataset.price = size?.precio || product.precio || 0;
   item.innerHTML = `<span>${quantity} × ${product.nombre}${size && product.tipo !== 'BEBIDA' ? ` · ${size.nombre}` : ''}${preparation && product.tipo !== 'BEBIDA' ? ` · ${preparation.nombre}` : ''}</span><button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
@@ -388,6 +461,19 @@ function updateOrderTotal() {
   if (!totalElement) return;
   const total = [...document.querySelectorAll('.selected-order-item')].reduce((sum, item) => sum + Number(item.dataset.quantity) * Number(item.dataset.price), 0);
   totalElement.textContent = `Bs ${total.toFixed(2)}`;
+}
+
+function updateEditableOrderItem(item) {
+  const product = products.find((entry) => String(entry.id) === String(item.dataset.productId));
+  if (!product) return;
+  const quantity = item.querySelector('.selected-order-quantity');
+  const preparation = item.querySelector('.selected-order-preparation');
+  item.dataset.quantity = Math.max(1, Number(quantity?.value) || 1);
+  if (preparation) item.dataset.variationId = preparation.value || '';
+  const size = product.producto_tamanos?.find((entry) => String(entry.id) === String(item.dataset.sizeId));
+  const variation = preparation?.selectedOptions[0]?.textContent || '';
+  item.querySelector('.selected-order-label').textContent = `${item.dataset.quantity} × ${product.nombre}${size ? ` · ${size.nombre}` : ''}${variation && variation !== 'Normal' ? ` · ${variation}` : ''}`;
+  updateOrderTotal();
 }
 
 async function togglePayment(id) {
@@ -413,11 +499,19 @@ async function initAuth() {
   const { data } = await supabaseClient.auth.getSession();
   isAuthenticated = Boolean(data.session);
   setAuthUI(isAuthenticated);
-  if (isAuthenticated) await loadAuthenticatedData();
+  if (isAuthenticated && !initialLoadDone) {
+    initialLoadDone = true;
+    await loadAuthenticatedData();
+  }
   supabaseClient.auth.onAuthStateChange(async (event, session) => {
     isAuthenticated = Boolean(session);
     setAuthUI(isAuthenticated);
-    if (event === 'SIGNED_IN' && isAuthenticated) await loadAuthenticatedData();
+    if (event === 'SIGNED_IN' && isAuthenticated && !initialLoadDone) {
+      initialLoadDone = true;
+      await loadAuthenticatedData();
+    } else if (event === 'SIGNED_OUT') {
+      initialLoadDone = false;
+    }
   });
 }
 
@@ -432,13 +526,29 @@ function orderMarkup(order, compact = false) {
       <div class="order-customer"><strong>${order.customer}</strong><span>${order.items}</span></div>
       <span class="order-type"><i data-lucide="${iconForType(order.type)}"></i>${order.type}</span>
       <strong class="order-total">${order.total}</strong>
-      <button class="order-status status-${order.status}" data-advance="${order.id}">${order.label}</button><button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
+      <button class="order-status status-${order.status}" data-advance="${order.id}">${order.label}</button>
+      <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
+      <div class="row-actions">
+        <button class="btn-action" data-edit-order="${order.databaseId}" title="Editar pedido"><i data-lucide="pencil"></i></button>
+        <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
+      </div>
     </article>`;
   }
   return `<article class="board-card" data-order-id="${order.id}">
-    <div class="board-card-top"><span>#${order.id}</span><span>${order.type}</span></div>
+    <div class="board-card-top">
+      <span>#${order.id}</span>
+      <div class="card-actions">
+        <span>${order.type}</span>
+        <button class="btn-action" data-edit-order="${order.databaseId}" title="Editar pedido"><i data-lucide="pencil"></i></button>
+        <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>
     <h4>${order.customer}</h4><p>${order.items}</p>
-    <div class="board-card-bottom"><strong>${order.total}</strong><button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button><button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregar' : 'Avanzar'}</button></div>
+    <div class="board-card-bottom">
+      <strong>${order.total}</strong>
+      <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
+      <button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregar' : 'Avanzar'}</button>
+    </div>
   </article>`;
 }
 
@@ -482,21 +592,29 @@ function showToast(message = 'Pedido actualizado') {
 }
 function updateMetric() {
   const metricValues = document.querySelectorAll('.metric-card>strong');
-  if (supabaseClient) {
+  if (supabaseClient && metricValues.length >= 4) {
     metricValues[0].textContent = orders.length;
     const sales = orders.reduce((sum, order) => sum + Number(order.total.replace('Bs ', '')), 0);
     metricValues[1].textContent = `Bs ${sales.toFixed(2)}`;
     metricValues[3].textContent = `Bs ${orders.length ? (sales / orders.length).toFixed(2) : '0.00'}`;
-    document.querySelector('.nav-count').textContent = orders.length;
+    const navCount = document.querySelector('.nav-count');
+    if (navCount) navCount.textContent = orders.length;
     const dineIn = orders.filter((order) => order.type.startsWith('Mesa')).length;
-    document.querySelector('.donut strong').textContent = orders.length;
-    document.querySelectorAll('.donut-legend b')[0].textContent = dineIn;
-    document.querySelectorAll('.donut-legend b')[1].textContent = orders.length - dineIn;
-    document.querySelector('.donut').style.background = orders.length ? `conic-gradient(var(--coral) 0 ${(dineIn / orders.length) * 100}%, #f3c66d ${(dineIn / orders.length) * 100}% 100%)` : '#eee7df';
-    document.querySelector('.best-sellers').innerHTML = '<div class="empty-state"><strong>Ranking en preparación</strong><span>Los productos más vendidos aparecerán con estadísticas detalladas.</span></div>';
+    const donutStrong = document.querySelector('.donut strong');
+    if (donutStrong) donutStrong.textContent = orders.length;
+    const legendBs = document.querySelectorAll('.donut-legend b');
+    if (legendBs.length >= 2) {
+      legendBs[0].textContent = dineIn;
+      legendBs[1].textContent = orders.length - dineIn;
+    }
+    const donut = document.querySelector('.donut');
+    if (donut) donut.style.background = orders.length ? `conic-gradient(var(--coral) 0 ${(dineIn / orders.length) * 100}%, #f3c66d ${(dineIn / orders.length) * 100}% 100%)` : '#eee7df';
+    const bestSellers = document.querySelector('.best-sellers');
+    if (bestSellers) bestSellers.innerHTML = '<div class="empty-state"><strong>Ranking en preparación</strong><span>Los productos más vendidos aparecerán con estadísticas detalladas.</span></div>';
     document.querySelectorAll('.metric-trend').forEach((trend) => { trend.textContent = 'Datos actuales'; });
   }
-  document.querySelector('#pending-metric').textContent = orders.filter((order) => order.status !== 'listo').length;
+  const pending = document.querySelector('#pending-metric');
+  if (pending) pending.textContent = orders.filter((order) => order.status !== 'listo').length;
   renderStats();
 }
 async function advanceOrder(id) {
@@ -532,8 +650,182 @@ function switchView(view) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openModal() { const form = document.querySelector('#order-form'); setupClientSearch(); addOrderBuilder(form); form.querySelector('.selected-order-items').innerHTML = ''; updateOrderTotal(); document.querySelector('#order-modal').classList.add('open'); document.querySelector('#order-modal').setAttribute('aria-hidden', 'false'); }
-function closeModal() { document.querySelector('#order-modal').classList.remove('open'); document.querySelector('#order-modal').setAttribute('aria-hidden', 'true'); }
+function openModal() {
+  const form = document.querySelector('#order-form');
+  setupClientSearch();
+  addOrderBuilder(form);
+  form.reset();
+  form.elements.id.value = '';
+  const clientPicker = form.querySelector('[data-client-picker]');
+  if (clientPicker) {
+    clientPicker.querySelector('[name="cliente_id"]').value = '';
+    const search = clientPicker.querySelector('[data-client-search]');
+    if (search) search.value = '';
+  }
+  form.querySelector('.selected-order-items').innerHTML = '';
+  updateOrderTotal();
+  const titleEl = document.querySelector('#order-modal-title');
+  const eyebrowEl = document.querySelector('#order-modal-eyebrow');
+  const submitBtn = document.querySelector('#save-order-submit');
+  const deleteBtn = form.querySelector('[data-delete-order]');
+  if (titleEl) titleEl.textContent = 'Registrar pedido';
+  if (eyebrowEl) eyebrowEl.textContent = 'Nuevo ticket';
+  if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Crear pedido';
+  if (deleteBtn) deleteBtn.hidden = true;
+  refreshIcons();
+  document.querySelector('#order-modal').classList.add('open');
+  document.querySelector('#order-modal').setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+  document.querySelector('#order-modal').classList.remove('open');
+  document.querySelector('#order-modal').setAttribute('aria-hidden', 'true');
+}
+
+async function openEditOrderModal(databaseId) {
+  const form = document.querySelector('#order-form');
+  setupClientSearch();
+  addOrderBuilder(form);
+
+  const localOrder = orders.find((o) => String(o.databaseId) === String(databaseId));
+  let orderRaw = null;
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient
+      .from('pedidos')
+      .select('id, numero_ticket, cliente_id, tipo_pedido, estado, estado_pago, notas, total, clientes(id, nombres, apellidos)')
+      .eq('id', databaseId)
+      .single();
+    if (!error && data) {
+      const { data: details, error: detailsError } = await supabaseClient
+        .from('detalle_pedido')
+        .select('id, producto_id, variacion_id, cantidad, precio_unitario')
+        .eq('pedido_id', databaseId);
+      if (!detailsError) {
+        data.detalle_pedido = details || [];
+        orderRaw = data;
+      } else {
+        console.error('No se pudieron cargar los productos del pedido:', detailsError);
+        showOrderError(`No se pudieron cargar los productos: ${detailsError.message || 'revisa los permisos de detalle_pedido en Supabase'}`);
+      }
+    } else if (error) {
+      console.error('No se pudo cargar el pedido:', error);
+      showOrderError('No se pudo cargar este pedido para modificarlo.');
+    }
+  }
+
+  form.reset();
+  form.elements.id.value = databaseId;
+
+  const titleEl = document.querySelector('#order-modal-title');
+  const eyebrowEl = document.querySelector('#order-modal-eyebrow');
+  const submitBtn = document.querySelector('#save-order-submit');
+  const deleteBtn = form.querySelector('[data-delete-order]');
+
+  const ticketNumber = orderRaw?.numero_ticket || localOrder?.id || databaseId;
+  if (titleEl) titleEl.textContent = `Editar pedido #${String(ticketNumber).padStart(6, '0')}`;
+  if (eyebrowEl) eyebrowEl.textContent = 'Modificación de ticket';
+  if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Guardar cambios';
+  if (deleteBtn) deleteBtn.hidden = false;
+
+  const targetClientId = orderRaw?.cliente_id;
+  const foundClient = clients.find((c) => String(c.id) === String(targetClientId));
+  const clientObj = Array.isArray(orderRaw?.clientes) ? orderRaw.clientes[0] : orderRaw?.clientes;
+  
+  let clientDisplayName = '';
+  if (foundClient) {
+    clientDisplayName = `${foundClient.nombres} ${foundClient.apellidos}`;
+  } else if (clientObj && clientObj.nombres) {
+    clientDisplayName = `${clientObj.nombres} ${clientObj.apellidos}`;
+  } else if (localOrder?.customer && localOrder.customer !== 'Cliente ocasional') {
+    clientDisplayName = localOrder.customer;
+  }
+
+  const clientPicker = form.querySelector('[data-client-picker]');
+  if (clientPicker) {
+    clientPicker.querySelector('[name="cliente_id"]').value = targetClientId || foundClient?.id || '';
+    const clientSearch = clientPicker.querySelector('[data-client-search]');
+    if (clientSearch) {
+      clientSearch.value = clientDisplayName;
+    }
+  }
+
+  const currentOrder = orderRaw || localOrder;
+  if (currentOrder) {
+    form.elements.pagado.checked = (orderRaw ? orderRaw.estado_pago : localOrder.payment) === 'PAGADO';
+    const typeSelect = form.querySelector('select');
+    if (typeSelect) {
+      const isMesa = orderRaw ? orderRaw.tipo_pedido === 'MESA' : localOrder.type.startsWith('Mesa');
+      typeSelect.value = isMesa ? 'En mesa' : 'Para llevar';
+    }
+    const notesTextarea = form.querySelector('textarea');
+    if (notesTextarea) notesTextarea.value = orderRaw?.notas || '';
+
+    const itemsContainer = form.querySelector('.selected-order-items');
+    itemsContainer.innerHTML = '';
+
+    if (orderRaw?.detalle_pedido && orderRaw.detalle_pedido.length) {
+      orderRaw.detalle_pedido.forEach((detail) => {
+        const product = products.find((p) => String(p.id) === String(detail.producto_id)) || { nombre: 'Producto', tipo: 'PLATO' };
+        const size = product.producto_tamanos?.find((item) => String(item.id) === String(detail.tamano_id));
+        const sizeName = size?.nombre || '';
+        const prepName = variations.find((variation) => String(variation.id) === String(detail.variacion_id))?.nombre || '';
+        const item = document.createElement('div');
+        item.className = 'selected-order-item';
+        item.dataset.productId = detail.producto_id;
+        item.dataset.sizeId = detail.tamano_id || '';
+        item.dataset.variationId = detail.variacion_id || '';
+        item.dataset.quantity = detail.cantidad;
+        item.dataset.price = detail.precio_unitario;
+        const preparationChoices = product.tipo === 'BEBIDA' ? [] : preparationOptions(product);
+        const preparationMarkup = preparationChoices.length
+          ? `<select class="selected-order-preparation" aria-label="Preparación">${preparationChoices.map((preparation) => `<option value="${preparation.id}" ${String(preparation.id) === String(detail.variacion_id) || preparation.nombre === prepName ? 'selected' : ''}>${preparation.nombre}</option>`).join('')}</select>`
+          : '';
+        item.innerHTML = `<span class="selected-order-label">${detail.cantidad} × ${product.nombre}${sizeName ? ` · ${sizeName}` : ''}${prepName && prepName !== 'Normal' ? ` · ${prepName}` : ''}</span><input class="selected-order-quantity" type="number" min="1" value="${detail.cantidad}" aria-label="Cantidad" />${preparationMarkup}<button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
+        itemsContainer.appendChild(item);
+      });
+    }
+    updateOrderTotal();
+  }
+
+  refreshIcons();
+  document.querySelector('#order-modal').classList.add('open');
+  document.querySelector('#order-modal').setAttribute('aria-hidden', 'false');
+}
+
+async function deleteOrder(databaseId) {
+  if (!databaseId) {
+    showToast('No se encontró el ID del pedido');
+    return;
+  }
+  const order = orders.find((o) => String(o.databaseId) === String(databaseId) || String(o.id) === String(databaseId));
+  const targetId = order?.databaseId || databaseId;
+  const ticketLabel = order ? `#${order.id}` : '';
+  if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${ticketLabel}?\n\nEsta acción eliminará el ticket y todos sus detalles.`)) return;
+  if (!supabaseClient) return;
+
+  try {
+    const { error: detailErr } = await supabaseClient.from('detalle_pedido').delete().eq('pedido_id', targetId);
+    if (detailErr) console.warn('Error al eliminar detalles:', detailErr);
+
+    const { error: orderErr } = await supabaseClient.from('pedidos').delete().eq('id', targetId);
+    if (orderErr) {
+      console.error('Error al eliminar pedido:', orderErr);
+      if (orderErr.code === '42501' || orderErr.message?.toLowerCase().includes('policy')) {
+        alert('Supabase bloqueó la eliminación por políticas RLS.\n\nPor favor ejecuta en Supabase SQL Editor:\n\nCREATE POLICY "Permitir delete en pedidos" ON public.pedidos FOR DELETE USING (true);\nCREATE POLICY "Permitir delete en detalle_pedido" ON public.detalle_pedido FOR DELETE USING (true);');
+      } else {
+        alert(`No se pudo eliminar el pedido: ${orderErr.message || 'Error en la base de datos'}`);
+      }
+      return;
+    }
+
+    closeModal();
+    await loadOrders();
+    showToast(`Pedido ${ticketLabel} eliminado permanentemente`);
+  } catch (err) {
+    console.error(err);
+    showToast('Error al procesar la eliminación');
+  }
+}
 
 document.addEventListener('click', (event) => {
   const nav = event.target.closest('[data-view], [data-view-link]');
@@ -556,8 +848,10 @@ document.addEventListener('click', (event) => {
   }
   if (event.target.closest('.remove-size')) event.target.closest('.size-row').remove();
   if (event.target.closest('.add-order-item')) addSelectedOrderItem();
-  if (event.target.closest('.remove-order-item')) event.target.closest('.selected-order-item').remove();
-  if (event.target.closest('.remove-order-item')) updateOrderTotal();
+  if (event.target.closest('.remove-order-item')) {
+    event.target.closest('.selected-order-item').remove();
+    updateOrderTotal();
+  }
   if (event.target.closest('[data-logout]')) supabaseClient?.auth.signOut();
   const profileButton = event.target.closest('[data-profile-menu]');
   if (profileButton) {
@@ -568,13 +862,23 @@ document.addEventListener('click', (event) => {
   }
   const paymentButton = event.target.closest('[data-payment]');
   if (paymentButton) togglePayment(paymentButton.dataset.payment);
+  
   const editProduct = event.target.closest('[data-edit-product]');
-  if (editProduct) openProductModal(products.find((product) => String(product.id) === editProduct.dataset.editProduct));
+  if (editProduct) openProductModal(products.find((product) => String(product.id) === String(editProduct.dataset.editProduct)));
   const deleteProductButton = event.target.closest('[data-delete-product]');
   if (deleteProductButton) deleteProduct(deleteProductButton.dataset.deleteProduct);
+  
   const editClient = event.target.closest('[data-edit-client]');
-  if (editClient) openClientModal(clients.find((client) => String(client.id) === editClient.dataset.editClient));
+  if (editClient) openClientModal(clients.find((client) => String(client.id) === String(editClient.dataset.editClient)));
   if (event.target.closest('[data-deactivate-client]')) deactivateClient(document.querySelector('#client-form [name="id"]').value);
+  const deleteClientBtn = event.target.closest('[data-delete-client], [data-delete-client-perm]');
+  if (deleteClientBtn) deleteClientPermanently(deleteClientBtn.dataset.deleteClient || document.querySelector('#client-form [name="id"]').value);
+  
+  const editOrderBtn = event.target.closest('[data-edit-order]');
+  if (editOrderBtn) openEditOrderModal(editOrderBtn.dataset.editOrder);
+  const deleteOrderBtn = event.target.closest('[data-delete-order], [data-delete-order-id]');
+  if (deleteOrderBtn) deleteOrder(deleteOrderBtn.dataset.deleteOrderId || document.querySelector('#order-form [name="id"]').value);
+
   if (event.target.closest('.modal-close') || event.target.id === 'order-modal') closeModal();
   if (event.target.closest('[data-close-product]') || event.target.id === 'product-modal') closeProductModal();
   if (event.target.closest('[data-close-client]') || event.target.id === 'client-modal') closeClientModal();
@@ -592,6 +896,10 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('change', (event) => {
   if (event.target.matches('#product-form [name="tipo"]')) updateProductTypeFields(event.target.form);
+  if (event.target.matches('.selected-order-preparation, .selected-order-quantity')) {
+    updateEditableOrderItem(event.target.closest('.selected-order-item'));
+    return;
+  }
   if (event.target.matches('#orders-date-picker')) {
     selectedOrdersDate = event.target.value || getBoliviaDateValue();
     loadOrders();
@@ -625,27 +933,82 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
   event.preventDefault();
   const form = event.currentTarget;
   addOrderBuilder(form);
+  const orderId = form.elements.id.value;
   if (supabaseClient) {
     const type = form.querySelector('select').value === 'En mesa' ? 'MESA' : 'PARA_LLEVAR';
     const selectedItems = [...form.querySelectorAll('.selected-order-item')];
-      if (!selectedItems.length) { showOrderError('Añade al menos un producto al pedido.'); return; }
+    if (!selectedItems.length) { showOrderError('Añade al menos un producto al pedido.'); return; }
     const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.dataset.quantity) * Number(item.dataset.price), 0);
     const clientId = form.elements.cliente_id.value || null;
     const paid = form.elements.pagado.checked;
-    const { data: order, error } = await supabaseClient.from('pedidos').insert({ cliente_id: clientId, tipo_pedido: type, estado: 'PENDIENTE', estado_pago: paid ? 'PAGADO' : 'PENDIENTE', pagado_at: paid ? new Date().toISOString() : null, subtotal, total: subtotal }).select('id').single();
-    if (error) { showOrderError(`No se pudo crear el pedido: ${error.message}`); console.error(error); return; }
-    if (order && selectedItems.length) {
-      const details = selectedItems.map((item) => ({ pedido_id: order.id, producto_id: item.dataset.productId, tamano_id: item.dataset.sizeId || null, variacion_id: item.dataset.variationId || null, cantidad: Number(item.dataset.quantity), precio_unitario: Number(item.dataset.price), subtotal: Number(item.dataset.quantity) * Number(item.dataset.price) }));
+    const notesTextarea = form.querySelector('textarea');
+    const notes = notesTextarea ? notesTextarea.value.trim() : null;
+
+    if (orderId) {
+      const { error } = await supabaseClient.from('pedidos').update({
+        cliente_id: clientId,
+        tipo_pedido: type,
+        estado_pago: paid ? 'PAGADO' : 'PENDIENTE',
+        pagado_at: paid ? new Date().toISOString() : null,
+        notas: notes,
+        subtotal,
+        total: subtotal,
+        updated_at: new Date().toISOString()
+      }).eq('id', orderId);
+
+      if (error) { showOrderError(`No se pudo actualizar el pedido: ${error.message}`); console.error(error); return; }
+
+      await supabaseClient.from('detalle_pedido').delete().eq('pedido_id', orderId);
+      const details = selectedItems.map((item) => ({
+        pedido_id: orderId,
+        producto_id: item.dataset.productId,
+        tamano_id: item.dataset.sizeId || null,
+        variacion_id: item.dataset.variationId || null,
+        cantidad: Number(item.dataset.quantity),
+        precio_unitario: Number(item.dataset.price),
+        subtotal: Number(item.dataset.quantity) * Number(item.dataset.price)
+      }));
       let detailResponse = await supabaseClient.from('detalle_pedido').insert(details);
       if (detailResponse.error?.message?.includes('tamano_id')) {
         detailResponse = await supabaseClient.from('detalle_pedido').insert(details.map(({ tamano_id, ...detail }) => detail));
       }
-      if (detailResponse.error) { showOrderError(`El pedido se creó, pero no se guardaron sus productos: ${detailResponse.error.message}`); console.error(detailResponse.error); return; }
+      if (detailResponse.error) { showOrderError(`El pedido se actualizó, pero no se guardaron los productos: ${detailResponse.error.message}`); console.error(detailResponse.error); return; }
+      showToast('Pedido actualizado correctamente');
+    } else {
+      const { data: order, error } = await supabaseClient.from('pedidos').insert({
+        cliente_id: clientId,
+        tipo_pedido: type,
+        estado: 'PENDIENTE',
+        estado_pago: paid ? 'PAGADO' : 'PENDIENTE',
+        pagado_at: paid ? new Date().toISOString() : null,
+        notas: notes,
+        subtotal,
+        total: subtotal
+      }).select('id').single();
+
+      if (error) { showOrderError(`No se pudo crear el pedido: ${error.message}`); console.error(error); return; }
+
+      if (order && selectedItems.length) {
+        const details = selectedItems.map((item) => ({
+          pedido_id: order.id,
+          producto_id: item.dataset.productId,
+          tamano_id: item.dataset.sizeId || null,
+          variacion_id: item.dataset.variationId || null,
+          cantidad: Number(item.dataset.quantity),
+          precio_unitario: Number(item.dataset.price),
+          subtotal: Number(item.dataset.quantity) * Number(item.dataset.price)
+        }));
+        let detailResponse = await supabaseClient.from('detalle_pedido').insert(details);
+        if (detailResponse.error?.message?.includes('tamano_id')) {
+          detailResponse = await supabaseClient.from('detalle_pedido').insert(details.map(({ tamano_id, ...detail }) => detail));
+        }
+        if (detailResponse.error) { showOrderError(`El pedido se creó, pero no se guardaron sus productos: ${detailResponse.error.message}`); console.error(detailResponse.error); return; }
+      }
+      showToast('Nuevo pedido creado');
     }
     await loadOrders();
   }
   closeModal();
-  showToast('Nuevo pedido creado');
 });
 
 document.querySelector('#product-form').addEventListener('submit', async (event) => {
@@ -654,17 +1017,17 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
   const form = event.currentTarget;
   const payload = { nombre: form.elements.nombre.value.trim(), descripcion: form.elements.descripcion.value.trim() || null, precio: Number(form.elements.precio.value), tipo: form.elements.tipo.value, activo: form.elements.activo.checked, updated_at: new Date().toISOString() };
   const id = form.elements.id.value;
-    showProductError('');
-    const response = id ? await supabaseClient.from('productos').update(payload).eq('id', id) : await supabaseClient.from('productos').insert(payload).select('id').single();
-    if (response.error) { showProductError('Supabase no permitió guardar el producto. Revisa las políticas RLS de productos.'); console.error(response.error); return; }
-    const productId = id || response.data?.id;
-    if (productId) {
-      const isDrink = form.elements.tipo.value === 'BEBIDA';
-      const sizes = isDrink ? [] : readSizeRows().map((size) => ({ producto_id: productId, nombre: size.nombre, precio: size.precio, activo: true, updated_at: new Date().toISOString() }));
-      if (isDrink) {
-        const sizeDelete = await supabaseClient.from('producto_tamanos').delete().eq('producto_id', productId);
-        if (sizeDelete.error) { showProductError('La bebida se guardó, pero no se pudieron limpiar sus tamaños. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
-      }
+  showProductError('');
+  const response = id ? await supabaseClient.from('productos').update(payload).eq('id', id) : await supabaseClient.from('productos').insert(payload).select('id').single();
+  if (response.error) { showProductError('Supabase no permitió guardar el producto. Revisa las políticas RLS de productos.'); console.error(response.error); return; }
+  const productId = id || response.data?.id;
+  if (productId) {
+    const isDrink = form.elements.tipo.value === 'BEBIDA';
+    const sizes = isDrink ? [] : readSizeRows().map((size) => ({ producto_id: productId, nombre: size.nombre, precio: size.precio, activo: true, updated_at: new Date().toISOString() }));
+    if (isDrink) {
+      const sizeDelete = await supabaseClient.from('producto_tamanos').delete().eq('producto_id', productId);
+      if (sizeDelete.error) { showProductError('La bebida se guardó, pero no se pudieron limpiar sus tamaños. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
+    }
     if (sizes.length) {
       const sizeResponse = await supabaseClient.from('producto_tamanos').upsert(sizes, { onConflict: 'producto_id,nombre' });
       if (sizeResponse.error) { showProductError('El producto se guardó, pero Supabase bloqueó sus tamaños. Revisa las políticas RLS de producto_tamanos.'); console.error(sizeResponse.error); return; }
