@@ -13,9 +13,22 @@ let clients = [];
 let families = [];
 let variations = [];
 let menuFilter = 'todos';
+let menuSearch = '';
+const menuFilters = ['todos', 'platos', 'bebidas', 'variaciones', 'extras'];
+const chickenExtra = {
+  id: 'menu-extra-chicharron', nombre: 'Extra de chicharrón de pollo',
+  descripcion: 'Trocitos de pechuga de pollo rebozados y fritos.',
+  tipo: 'EXTRA', precio: 5, activo: true, menuOnly: true
+};
+const mixedDish = {
+  id: 'menu-mixto-chaufa', nombre: 'Mixto',
+  descripcion: 'Arroz chaufa con chicharrones de pollo y un poco de caldo.',
+  tipo: 'PLATO', precio: 35, activo: true, menuOnly: true
+};
 let selectedOrdersDate = '';
 let initialLoadDone = false;
 const defaultPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
+const mixedPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
 
 function getBoliviaDateValue(date = new Date()) {
@@ -52,6 +65,7 @@ function getBoliviaDayRange(dateValue = selectedOrdersDate || getBoliviaDateValu
 
 function preparationNames(product) {
   const saved = product.producto_variaciones?.map((item) => item.variaciones?.nombre).filter(Boolean) || [];
+  if (isMixedDish(product)) return [...new Set([...mixedPreparations, ...saved])].filter((name) => normalizeMenuText(name).trim() !== 'dulce');
   if (saved.length) return saved;
   return onlyNormalProducts.includes(product.nombre) ? ['Normal'] : defaultPreparations;
 }
@@ -101,37 +115,129 @@ async function loadOrders() {
   updateMetric();
 }
 
+function menuEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function normalizeMenuText(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function isChickenExtra(product) {
+  const name = String(product.nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return /extra/.test(name) && /chicharron/.test(name);
+}
+
+function isMixedDish(product) {
+  const name = normalizeMenuText(product.nombre);
+  return /\bmixto\b/.test(name) || (/arroz|chaufa/.test(name) && /chicharron/.test(name));
+}
+
+function servingLabel(product) {
+  if (product.tipo === 'BEBIDA' || product.tipo === 'EXTRA' || isChickenExtra(product)) return '';
+  if (isMixedDish(product)) return 'Plato llano · Poco caldo';
+  return /arroz|chaufa/.test(normalizeMenuText(product.nombre)) ? 'Plato hondo · Sin caldo' : 'Plato hondo · Con caldo';
+}
+
+// Decorative illustrations use only markup and CSS; no media is stored or requested.
+function menuIllustration(product) {
+  const name = String(product.nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (product.tipo === 'BEBIDA') {
+    const palette = /limon|sprite/.test(name) ? 'lime' : /naranja|mango|maracuy/.test(name) ? 'orange' : /cola|cafe/.test(name) ? 'cola' : /frutilla|fresa|jamaica/.test(name) ? 'berry' : 'fresh';
+    return `<div class="menu-visual beverage-${palette}" style="${drinkColorStyle(product)}" aria-hidden="true"><div class="drink-art"><span class="drink-straw"></span><span class="drink-glass"><span class="drink-liquid"></span><span class="drink-ice ice-one"></span><span class="drink-ice ice-two"></span><span class="drink-ice ice-three"></span></span><span class="drink-garnish"></span></div></div>`;
+  }
+  const extra = isChickenExtra(product);
+  const chicken = /chicharron/.test(name);
+  const hasShrimp = /\bcamaron(?:es)?\b/.test(name);
+  const shrimpMarkup = hasShrimp ? '<span class="shrimp shrimp-one"></span><span class="shrimp shrimp-two"></span><span class="shrimp shrimp-three"></span>' : '';
+  const kind = extra ? 'chicken-extra' : /arroz|chaufa/.test(name) ? 'rice' : 'noodles';
+  const grains = Array.from({ length: 50 }, (_, i) => `<span class="rice-grain" style="--x:${9 + (i * 23 % 80)}%;--y:${8 + (i * 37 % 81)}%;--r:${i * 47}deg"></span>`).join('');
+  if (isMixedDish(product)) {
+    return `<div class="menu-visual dish-rice dish-mixed" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><span class="mixed-broth"></span><div class="food-serving">${grains}<span class="food-greens"></span>${shrimpMarkup}</div><div class="mixed-chicken crispy-chicken"><span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span></div></div></div></div>`;
+  }
+  const noodles = Array.from({ length: 13 }, (_, i) => `<span class="noodle-strand" style="--x:${5 + (i * 19 % 46)}%;--y:${8 + (i * 29 % 60)}%;--r:${(i * 37 % 120) - 60}deg"></span>`).join('');
+  return `<div class="menu-visual dish-${kind}${!extra ? ' deep-dish' : ''}${chicken ? ' crispy-chicken' : ''}${/yakisoba/.test(name) ? ' yakisoba' : ''}" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><div class="food-serving">${kind === 'rice' ? grains : ''}${kind === 'noodles' ? `<span class="noodle-nest">${noodles}</span>` : ''}${hasShrimp ? shrimpMarkup : '<span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span>'}${extra ? '<span class="food-piece piece-five"></span><span class="food-piece piece-six"></span>' : '<span class="food-greens"></span>'}</div></div></div></div>`;
+}
+
 function productMarkup(product) {
+  const illustration = menuIllustration(product);
+  const isExtra = product.tipo === 'EXTRA' || isChickenExtra(product);
+  const preparations = product.tipo === 'BEBIDA' || isExtra ? [] : preparationNames(product);
+  const serving = servingLabel(product);
+  product = { ...product, nombre: menuEscape(product.nombre), descripcion: menuEscape(product.descripcion), id: menuEscape(product.id) };
   const isDrink = product.tipo === 'BEBIDA';
-  const sizes = isDrink ? [] : product.producto_tamanos || [];
-  const preparations = isDrink ? [] : preparationNames(product);
-  const sizeMarkup = sizes.map((size) => `<span>${size.nombre}: Bs ${Number(size.precio).toFixed(2)}</span>`).join('') || `<span>Bs ${Number(product.precio || 0).toFixed(2)}</span>`;
+  const sizes = isDrink || isExtra ? [] : product.producto_tamanos || [];
+  const sizeMarkup = sizes.map((size) => `<span>${menuEscape(size.nombre)}: Bs ${Number(size.precio).toFixed(2)}</span>`).join('') || `<span>Bs ${Number(product.precio || 0).toFixed(2)}</span>`;
   const prepMarkup = preparations.map((p) => {
     const slug = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
-    return `<span class="prep-badge prep-${slug}">${p}</span>`;
+    return `<span class="prep-badge prep-${menuEscape(slug)}">${menuEscape(p)}</span>`;
   }).join('') || '<span class="prep-badge">Sin preparación definida</span>';
-  return `<article class="menu-item-card"><span class="menu-category ${isDrink ? 'drink' : ''}">${product.tipo}</span><h3>${product.nombre}</h3><p>${product.descripcion || 'Sin descripción'}</p><strong>${product.activo ? 'Disponible' : 'No disponible'}</strong><div class="variation-row">${sizeMarkup}</div>${!isDrink ? `<div class="preparation-list">${prepMarkup}</div>` : ''}<div class="menu-actions"><button class="edit-button" data-edit-product="${product.id}" title="Editar ${product.nombre}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i></button><button class="delete-item-button" data-delete-product="${product.id}" title="Eliminar ${product.nombre}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></article>`;
+  return `<article class="menu-item-card ${product.activo ? '' : 'unavailable'}">${illustration}<div class="menu-card-content"><div class="menu-card-meta"><span class="menu-category ${isDrink ? 'drink' : ''}">${isDrink ? 'Bebida' : isExtra ? 'Extra' : 'Plato'}</span><span class="menu-availability">${product.activo ? 'Disponible' : 'No disponible'}</span></div><h3>${product.nombre}</h3><div class="variation-row">${sizeMarkup}</div>${product.descripcion ? `<p>${product.descripcion}</p>` : ''}${serving ? `<p class="serving-note">${serving}</p>` : ''}${!isDrink && !isExtra && preparations.length ? (preparations.length > 1 ? `<details class="menu-preparations"><summary>${preparations.length} preparaciones disponibles</summary><div class="preparation-list">${prepMarkup}</div></details>` : `<div class="preparation-list">${prepMarkup}</div>`) : ''}<div class="menu-actions" ${product.menuOnly ? 'hidden' : ''}><button class="edit-button" data-edit-product="${product.id}" title="Editar ${product.nombre}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i><span>Editar</span></button><button class="delete-item-button" data-delete-product="${product.id}" title="Eliminar ${product.nombre}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></div></article>`;
 }
 
 function renderProducts() {
   const grid = document.querySelector('#view-menu .menu-grid');
-  if (!grid || !supabaseClient) return;
+  if (!grid) return;
+  const menuProducts = [...products];
+  if (!products.some(isMixedDish)) menuProducts.push(mixedDish);
+  if (!products.some(isChickenExtra)) menuProducts.push(chickenExtra);
+  const visibleProducts = document.body.classList.contains('customer-menu') ? menuProducts.filter((product) => product.activo) : menuProducts;
   const menuButtons = document.querySelectorAll('#view-menu .menu-tabs button');
   if (menuButtons.length >= 3) {
-    menuButtons[0].innerHTML = `Todos <b>${products.length}</b>`;
-    menuButtons[1].innerHTML = `Platos <b>${products.filter((product) => product.tipo === 'PLATO').length}</b>`;
-    menuButtons[2].innerHTML = `Bebidas <b>${products.filter((product) => product.tipo === 'BEBIDA').length}</b>`;
+    menuButtons[0].innerHTML = `Todos <b>${visibleProducts.length}</b>`;
+    menuButtons[1].innerHTML = `Platos <b>${visibleProducts.filter((product) => product.tipo === 'PLATO' && !isChickenExtra(product)).length}</b>`;
+    menuButtons[2].innerHTML = `Bebidas <b>${visibleProducts.filter((product) => product.tipo === 'BEBIDA').length}</b>`;
   }
-  const filteredProducts = products.filter((product) => {
-    if (menuFilter === 'platos') return product.tipo === 'PLATO';
+  const filteredProducts = visibleProducts.filter((product) => {
+    if (menuSearch && !normalizeMenuText(`${product.nombre} ${product.descripcion || ''}`).includes(normalizeMenuText(menuSearch))) return false;
+    if (menuFilter === 'extras') return product.tipo === 'EXTRA' || isChickenExtra(product);
+    if (menuFilter === 'platos') return product.tipo === 'PLATO' && !isChickenExtra(product);
     if (menuFilter === 'bebidas') return product.tipo === 'BEBIDA';
-    if (menuFilter === 'variaciones') return product.tipo === 'PLATO' && preparationNames(product).length > 1;
+    if (menuFilter === 'variaciones') return product.tipo === 'PLATO' && !isChickenExtra(product) && preparationNames(product).length > 1;
     return true;
   });
-  menuButtons.forEach((button, index) => button.classList.toggle('active', ['todos', 'platos', 'bebidas', 'variaciones'][index] === menuFilter));
-  grid.innerHTML = filteredProducts.length ? filteredProducts.map(productMarkup).join('') : '<div class="empty-state"><i data-lucide="utensils"></i><strong>No hay productos en este filtro</strong><span>Prueba con otra categoría del menú.</span></div>';
+  menuButtons.forEach((button, index) => {
+    const selected = menuFilters[index] === menuFilter;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  const count = document.querySelector('#menu-result-count');
+  if (count) count.textContent = `${filteredProducts.length} ${filteredProducts.length === 1 ? 'producto' : 'productos'}`;
+  grid.innerHTML = filteredProducts.length ? filteredProducts.map(productMarkup).join('') : '<div class="empty-state"><i data-lucide="search"></i><strong>No encontramos productos</strong><span>Prueba con otro nombre o categoría.</span><button type="button" class="secondary-button" data-reset-menu>Ver toda la carta</button></div>';
   refreshIcons();
 }
+
+function toggleCustomerMenu(force) {
+  const active = typeof force === 'boolean' ? force : !document.body.classList.contains('customer-menu');
+  document.body.classList.toggle('customer-menu', active);
+  const button = document.querySelector('#show-customer-menu');
+  button?.setAttribute('aria-pressed', String(active));
+  if (button) button.querySelector('span').textContent = active ? 'Volver a administrar' : 'Mostrar menú';
+  renderProducts();
+}
+
+document.querySelector('#show-customer-menu')?.addEventListener('click', () => toggleCustomerMenu());
+document.querySelector('#menu-search')?.addEventListener('input', (event) => {
+  menuSearch = event.target.value.trim();
+  renderProducts();
+});
+document.querySelector('#view-menu')?.addEventListener('click', (event) => {
+  const layout = event.target.closest('[data-menu-layout]');
+  if (layout) {
+    document.querySelector('#view-menu').classList.toggle('menu-list-view', layout.dataset.menuLayout === 'list');
+    document.querySelectorAll('[data-menu-layout]').forEach((button) => button.setAttribute('aria-pressed', String(button === layout)));
+  }
+  if (event.target.closest('[data-reset-menu]')) {
+    menuSearch = '';
+    menuFilter = 'todos';
+    document.querySelector('#menu-search').value = '';
+    renderProducts();
+    document.querySelector('#menu-search').focus();
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && document.body.classList.contains('customer-menu')) toggleCustomerMenu(false);
+});
 
 function sizeRowsMarkup(sizes = []) {
   return sizes.map((size) => `<div class="size-row"><input class="size-name" value="${size.nombre}" placeholder="Tamaño" /><input class="size-price" type="number" min="0" step="0.01" value="${size.precio}" placeholder="Precio" /><button type="button" class="remove-size" aria-label="Quitar tamaño"><i data-lucide="minus"></i></button></div>`).join('');
@@ -145,6 +251,7 @@ function updateProductTypeFields(form) {
   const sizesField = form.querySelector('[data-sizes-field]');
   if (!sizesField) return;
   const isDrink = form.elements.tipo.value === 'BEBIDA';
+  updateDrinkColorPreview(form);
   sizesField.hidden = isDrink;
   sizesField.style.display = isDrink ? 'none' : 'grid';
 }
@@ -159,7 +266,7 @@ async function loadProducts() {
     ]);
 
     if (prodRes.error) throw prodRes.error;
-    products = prodRes.data || [];
+    products = (prodRes.data || []).map(decodeDrinkProduct);
     if (!varRes.error && varRes.data) {
       products.forEach((product) => {
         product.producto_variaciones = varRes.data.filter((item) => item.producto_id === product.id);
@@ -270,10 +377,10 @@ function openClientModal(client = null) {
   const deletePerm = document.querySelector('[data-delete-client-perm]');
   if (deactivate) deactivate.hidden = !client || !client.activo;
   if (deletePerm) deletePerm.hidden = !client;
-  document.querySelector('#client-modal').classList.add('open');
+  showDialog('client-modal');
 }
 
-function closeClientModal() { document.querySelector('#client-modal').classList.remove('open'); }
+function closeClientModal() { hideDialog('client-modal'); }
 
 async function deactivateClient(id) {
   if (!window.confirm('¿Cerrar/Desactivar este cliente? Se conservará su historial.')) return;
@@ -305,9 +412,12 @@ async function deleteClientPermanently(id) {
 }
 
 function openProductModal(product = null) {
+  if (product) product = decodeDrinkProduct(product);
   const modal = document.querySelector('#product-modal');
   const form = document.querySelector('#product-form');
   form.reset();
+  const previousError = form.querySelector('.form-error');
+  if (previousError) previousError.textContent = '';
   form.elements.id.value = product?.id || '';
   form.elements.nombre.value = product?.nombre || '';
   form.elements.descripcion.value = product?.descripcion || '';
@@ -316,10 +426,10 @@ function openProductModal(product = null) {
   form.elements.activo.checked = product?.activo ?? true;
   let sizesField = form.querySelector('[data-sizes-field]');
   if (!sizesField) {
-    sizesField = document.createElement('label');
+    sizesField = document.createElement('div');
     sizesField.dataset.sizesField = 'true';
     sizesField.innerHTML = '<span class="field-title">Tamaños y precios</span><div class="sizes-editor"></div><button type="button" class="secondary-button add-size"><i data-lucide="plus"></i>Añadir tamaño</button><span class="preparation-label">Preparaciones permitidas</span><div class="preparations-editor"></div>';
-    form.insertBefore(sizesField, form.querySelector('.checkbox-label'));
+    form.querySelector('.modal-body').insertBefore(sizesField, form.querySelector('.checkbox-label'));
   }
   sizesField.querySelector('.sizes-editor').innerHTML = sizeRowsMarkup(product?.producto_tamanos || []);
   if (!product) sizesField.querySelector('.add-size').click();
@@ -328,6 +438,7 @@ function openProductModal(product = null) {
   sizesField.querySelector('.sizes-editor').hidden = isDrink;
   sizesField.querySelector('.preparation-label').hidden = isDrink;
   sizesField.querySelector('.preparations-editor').hidden = isDrink;
+  setupDrinkColorField(form, product);
   updateProductTypeFields(form);
   const allowed = product ? allowedPreparationIds(product) : variations.filter((variation) => !onlyNormalProducts.includes(form.elements.nombre.value.trim()) || variation.nombre === 'Normal').map((variation) => variation.id);
   sizesField.querySelector('.preparations-editor').innerHTML = variations.map((variation) => `<label class="preparation-option"><input type="checkbox" value="${variation.id}" ${allowed.includes(variation.id) ? 'checked' : ''} />${variation.nombre}</label>`).join('');
@@ -345,19 +456,14 @@ function openProductModal(product = null) {
     deleteButton.className = 'secondary-button delete-button';
     deleteButton.dataset.deleteProduct = product.id;
     deleteButton.innerHTML = '<i data-lucide="trash-2"></i>Eliminar producto';
-    form.appendChild(deleteButton);
+    form.querySelector('.modal-body').appendChild(deleteButton);
   }
   if (deleteButton) deleteButton.hidden = !product;
   document.querySelector('#product-modal-title').textContent = product ? 'Editar producto' : 'Nuevo producto';
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
+  showDialog('product-modal');
 }
 
-function closeProductModal() {
-  const modal = document.querySelector('#product-modal');
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
-}
+function closeProductModal() { hideDialog('product-modal'); }
 
 async function deleteProduct(id) {
   const product = products.find((p) => String(p.id) === String(id));
@@ -377,7 +483,7 @@ function showProductError(message) {
   if (!errorElement) {
     errorElement = document.createElement('p');
     errorElement.className = 'form-error';
-    document.querySelector('#product-form').prepend(errorElement);
+    document.querySelector('#product-form .modal-body').prepend(errorElement);
   }
   errorElement.textContent = message;
 }
@@ -393,7 +499,7 @@ function addOrderBuilder(form) {
   field.dataset.orderItems = 'true';
   field.className = 'order-items-builder';
   field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
-  form.insertBefore(field, form.querySelector('label:last-of-type'));
+  form.querySelector('.modal-body').insertBefore(field, form.querySelector('.modal-body > label:last-of-type'));
   renderOrderProductOptions();
   refreshIcons();
 }
@@ -413,7 +519,12 @@ function ensureDefaultVariations() {
   });
 }
 
+function quantityOnlyProduct(product) {
+  return product?.tipo === 'BEBIDA' || product?.tipo === 'EXTRA' || (product && isChickenExtra(product));
+}
+
 function preparationOptions(product) {
+  if (quantityOnlyProduct(product)) return [];
   if (onlyNormalProducts.includes(product.nombre)) {
     return [{ id: 'Normal', nombre: 'Normal' }];
   }
@@ -431,7 +542,7 @@ function addSelectedOrderItem() {
   const product = products.find((item) => String(item.id) === productSelect.value);
   if (!product) { showOrderError('Selecciona un producto antes de añadirlo.'); return; }
   const sizeSelect = document.querySelector('.order-size');
-  const size = product.producto_tamanos?.find((item) => String(item.id) === sizeSelect.value);
+  const size = quantityOnlyProduct(product) ? null : product.producto_tamanos?.find((item) => String(item.id) === sizeSelect.value);
   const preparationSelect = document.querySelector('.order-preparation');
   const preparation = onlyNormalProducts.includes(product.nombre)
     ? { id: 'Normal', nombre: 'Normal' }
@@ -441,10 +552,10 @@ function addSelectedOrderItem() {
   item.className = 'selected-order-item';
   item.dataset.productId = product.id;
   item.dataset.sizeId = size?.id || '';
-  item.dataset.variationId = product.tipo === 'BEBIDA' ? '' : preparation?.id || '';
+  item.dataset.variationId = quantityOnlyProduct(product) ? '' : preparation?.id || '';
   item.dataset.quantity = quantity;
   item.dataset.price = size?.precio || product.precio || 0;
-  item.innerHTML = `<span>${quantity} × ${product.nombre}${size && product.tipo !== 'BEBIDA' ? ` · ${size.nombre}` : ''}${preparation && product.tipo !== 'BEBIDA' ? ` · ${preparation.nombre}` : ''}</span><button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
+  item.innerHTML = `<span>${quantity} × ${product.nombre}${size && !quantityOnlyProduct(product) ? ` · ${size.nombre}` : ''}${preparation && !quantityOnlyProduct(product) ? ` · ${preparation.nombre}` : ''}</span><button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
   document.querySelector('.selected-order-items').appendChild(item);
   productSelect.value = '';
   sizeSelect.innerHTML = '<option>Tamaño</option>';
@@ -579,7 +690,10 @@ function renderStats() {
   if (chartTitle) chartTitle.innerHTML = `Bs ${sales.toFixed(2)}`;
   const statsList = document.querySelector('.stats-list');
   if (statsList) statsList.innerHTML = '<div class="empty-state"><strong>Preferencias en preparación</strong><span>Las variaciones se mostrarán con estadísticas detalladas.</span></div>';
-  document.querySelectorAll('.chart svg, .chart-lines, .chart-labels').forEach((element) => { element.hidden = true; });
+  const chart = document.querySelector('.chart');
+  if (chart) chart.innerHTML = '<div class="empty-state"><strong>Historial de ventas en preparación</strong><span>El gráfico estará disponible cuando se conecten los datos históricos.</span></div>';
+  const chartPeriod = document.querySelector('.chart-period');
+  if (chartPeriod) chartPeriod.textContent = 'Día seleccionado';
 }
 
 function refreshIcons() { if (window.lucide) window.lucide.createIcons(); }
@@ -608,7 +722,7 @@ function updateMetric() {
       legendBs[1].textContent = orders.length - dineIn;
     }
     const donut = document.querySelector('.donut');
-    if (donut) donut.style.background = orders.length ? `conic-gradient(var(--coral) 0 ${(dineIn / orders.length) * 100}%, #f3c66d ${(dineIn / orders.length) * 100}% 100%)` : '#eee7df';
+    if (donut) donut.style.background = orders.length ? `conic-gradient(var(--coral) 0 ${(dineIn / orders.length) * 100}%, var(--chart-secondary) ${(dineIn / orders.length) * 100}% 100%)` : 'var(--paper-subtle)';
     const bestSellers = document.querySelector('.best-sellers');
     if (bestSellers) bestSellers.innerHTML = '<div class="empty-state"><strong>Ranking en preparación</strong><span>Los productos más vendidos aparecerán con estadísticas detalladas.</span></div>';
     document.querySelectorAll('.metric-trend').forEach((trend) => { trend.textContent = 'Datos actuales'; });
@@ -646,6 +760,8 @@ async function advanceOrder(id) {
 function switchView(view) {
   document.querySelectorAll('.page-view').forEach((page) => page.classList.toggle('active', page.id === `view-${view}`));
   document.querySelectorAll('.nav-item[data-view]').forEach((item) => item.classList.toggle('active', item.dataset.view === view));
+  const viewLabel = document.querySelector('#current-view-label');
+  if (viewLabel) viewLabel.textContent = { inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', menu: 'Menú', estadisticas: 'Estadísticas' }[view] || 'Inicio';
   if (view === 'pedidos') renderBoard();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -673,14 +789,10 @@ function openModal() {
   if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Crear pedido';
   if (deleteBtn) deleteBtn.hidden = true;
   refreshIcons();
-  document.querySelector('#order-modal').classList.add('open');
-  document.querySelector('#order-modal').setAttribute('aria-hidden', 'false');
+  showDialog('order-modal');
 }
 
-function closeModal() {
-  document.querySelector('#order-modal').classList.remove('open');
-  document.querySelector('#order-modal').setAttribute('aria-hidden', 'true');
-}
+function closeModal() { hideDialog('order-modal'); }
 
 async function openEditOrderModal(databaseId) {
   const form = document.querySelector('#order-form');
@@ -766,17 +878,17 @@ async function openEditOrderModal(databaseId) {
     if (orderRaw?.detalle_pedido && orderRaw.detalle_pedido.length) {
       orderRaw.detalle_pedido.forEach((detail) => {
         const product = products.find((p) => String(p.id) === String(detail.producto_id)) || { nombre: 'Producto', tipo: 'PLATO' };
-        const size = product.producto_tamanos?.find((item) => String(item.id) === String(detail.tamano_id));
+        const size = quantityOnlyProduct(product) ? null : product.producto_tamanos?.find((item) => String(item.id) === String(detail.tamano_id));
         const sizeName = size?.nombre || '';
-        const prepName = variations.find((variation) => String(variation.id) === String(detail.variacion_id))?.nombre || '';
+        const prepName = quantityOnlyProduct(product) ? '' : variations.find((variation) => String(variation.id) === String(detail.variacion_id))?.nombre || '';
         const item = document.createElement('div');
         item.className = 'selected-order-item';
         item.dataset.productId = detail.producto_id;
-        item.dataset.sizeId = detail.tamano_id || '';
-        item.dataset.variationId = detail.variacion_id || '';
+        item.dataset.sizeId = quantityOnlyProduct(product) ? '' : detail.tamano_id || '';
+        item.dataset.variationId = quantityOnlyProduct(product) ? '' : detail.variacion_id || '';
         item.dataset.quantity = detail.cantidad;
         item.dataset.price = detail.precio_unitario;
-        const preparationChoices = product.tipo === 'BEBIDA' ? [] : preparationOptions(product);
+        const preparationChoices = preparationOptions(product);
         const preparationMarkup = preparationChoices.length
           ? `<select class="selected-order-preparation" aria-label="Preparación">${preparationChoices.map((preparation) => `<option value="${preparation.id}" ${String(preparation.id) === String(detail.variacion_id) || preparation.nombre === prepName ? 'selected' : ''}>${preparation.nombre}</option>`).join('')}</select>`
           : '';
@@ -788,8 +900,7 @@ async function openEditOrderModal(databaseId) {
   }
 
   refreshIcons();
-  document.querySelector('#order-modal').classList.add('open');
-  document.querySelector('#order-modal').setAttribute('aria-hidden', 'false');
+  showDialog('order-modal');
 }
 
 async function deleteOrder(databaseId) {
@@ -838,7 +949,7 @@ document.addEventListener('click', (event) => {
   const menuButton = event.target.closest('#view-menu .menu-tabs button');
   if (menuButton) {
     const menuButtons = [...document.querySelectorAll('#view-menu .menu-tabs button')];
-    menuFilter = ['todos', 'platos', 'bebidas', 'variaciones'][menuButtons.indexOf(menuButton)] || 'todos';
+    menuFilter = menuFilters[menuButtons.indexOf(menuButton)] || 'todos';
     renderProducts();
   }
   if (event.target.closest('.add-size')) {
@@ -879,9 +990,6 @@ document.addEventListener('click', (event) => {
   const deleteOrderBtn = event.target.closest('[data-delete-order], [data-delete-order-id]');
   if (deleteOrderBtn) deleteOrder(deleteOrderBtn.dataset.deleteOrderId || document.querySelector('#order-form [name="id"]').value);
 
-  if (event.target.closest('.modal-close') || event.target.id === 'order-modal') closeModal();
-  if (event.target.closest('[data-close-product]') || event.target.id === 'product-modal') closeProductModal();
-  if (event.target.closest('[data-close-client]') || event.target.id === 'client-modal') closeClientModal();
   const filter = event.target.closest('[data-filter]');
   if (filter) { document.querySelectorAll('[data-filter]').forEach((button) => button.classList.remove('active')); filter.classList.add('active'); renderBoard(filter.dataset.filter); }
 });
@@ -913,11 +1021,13 @@ document.addEventListener('change', (event) => {
   const preparationSelect = document.querySelector('.order-preparation');
   const isDrink = product?.tipo === 'BEBIDA';
   const isOnlyNormal = product && onlyNormalProducts.includes(product.nombre);
-  sizeControl.hidden = isDrink;
-  preparationControl.hidden = isDrink || isOnlyNormal;
-  sizeSelect.innerHTML = product?.producto_tamanos?.map((size) => `<option value="${size.id}">${size.nombre} · Bs ${Number(size.precio).toFixed(2)}</option>`).join('') || '<option value="">Sin tamaños</option>';
-  sizeSelect.disabled = isDrink || !product?.producto_tamanos?.length;
-  preparationSelect.innerHTML = (product && !isDrink && !isOnlyNormal ? preparationOptions(product) : []).map((variation, index) => `<option value="${variation.id}" ${index === 0 ? 'selected' : ''}>${variation.nombre}</option>`).join('');
+  const quantityOnly = !product || quantityOnlyProduct(product);
+  sizeControl.hidden = quantityOnly;
+  preparationControl.hidden = quantityOnly || isOnlyNormal;
+  preparationSelect.disabled = quantityOnly || isOnlyNormal;
+  sizeSelect.innerHTML = (quantityOnly ? [] : product?.producto_tamanos)?.map((size) => `<option value="${size.id}">${size.nombre} · Bs ${Number(size.precio).toFixed(2)}</option>`).join('') || '<option value="">Sin tamaños</option>';
+  sizeSelect.disabled = quantityOnly || !product?.producto_tamanos?.length;
+  preparationSelect.innerHTML = (product && !quantityOnly && !isOnlyNormal ? preparationOptions(product) : []).map((variation, index) => `<option value="${variation.id}" ${index === 0 ? 'selected' : ''}>${variation.nombre}</option>`).join('');
 });
 
 document.addEventListener('input', (event) => {
@@ -1015,7 +1125,7 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
   event.preventDefault();
   if (!supabaseClient) { showToast('Configura Supabase para guardar productos'); return; }
   const form = event.currentTarget;
-  const payload = { nombre: form.elements.nombre.value.trim(), descripcion: form.elements.descripcion.value.trim() || null, precio: Number(form.elements.precio.value), tipo: form.elements.tipo.value, activo: form.elements.activo.checked, updated_at: new Date().toISOString() };
+  const payload = { nombre: form.elements.nombre.value.trim(), descripcion: encodeDrinkDescription(form.elements.descripcion.value.trim(), form.elements.tipo.value === 'BEBIDA' ? selectedDrinkColor(form) : null), precio: Number(form.elements.precio.value), tipo: form.elements.tipo.value, activo: form.elements.activo.checked, updated_at: new Date().toISOString() };
   const id = form.elements.id.value;
   showProductError('');
   const response = id ? await supabaseClient.from('productos').update(payload).eq('id', id) : await supabaseClient.from('productos').insert(payload).select('id').single();
