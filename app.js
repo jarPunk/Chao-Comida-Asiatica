@@ -333,6 +333,7 @@ function setupClientSearch() {
     search.value = option.dataset.clientId ? option.querySelector('strong').textContent : '';
     picker.querySelector('.client-results').classList.remove('open');
   });
+  if (!picker.querySelector('[data-quick-client]')) picker.insertAdjacentHTML('beforeend', '<button type="button" class="secondary-button quick-client-button" data-quick-client>＋ Nuevo cliente</button>');
   renderClientPicker();
 }
 
@@ -500,6 +501,7 @@ function addOrderBuilder(form) {
   field.className = 'order-items-builder';
   field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
   form.querySelector('.modal-body').insertBefore(field, form.querySelector('.modal-body > label:last-of-type'));
+  setupOrderCatalog(field);
   renderOrderProductOptions();
   refreshIcons();
 }
@@ -507,34 +509,31 @@ function addOrderBuilder(form) {
 function renderOrderProductOptions() {
   const select = document.querySelector('.order-product');
   if (!select) return;
+  renderOrderCatalog();
   const activeProducts = products.filter((product) => product.activo);
-  select.innerHTML = '<option value="">Selecciona un producto</option><optgroup label="Platos">' + activeProducts.filter((product) => product.tipo === 'PLATO').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup><optgroup label="Bebidas / refrescos">' + activeProducts.filter((product) => product.tipo === 'BEBIDA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup>';
-}
-
-function ensureDefaultVariations() {
-  defaultPreparations.forEach((name) => {
-    if (!variations.some((v) => v.nombre.toLowerCase() === name.toLowerCase())) {
-      variations.push({ id: name, nombre: name });
-    }
-  });
+  select.innerHTML = '<option value="">Selecciona un producto</option><optgroup label="Platos">' + activeProducts.filter((product) => product.tipo === 'PLATO' || product.tipo === 'EXTRA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup><optgroup label="Bebidas / refrescos">' + activeProducts.filter((product) => product.tipo === 'BEBIDA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup>';
 }
 
 function quantityOnlyProduct(product) {
   return product?.tipo === 'BEBIDA' || product?.tipo === 'EXTRA' || (product && isChickenExtra(product));
 }
 
+function databaseVariationId(value) {
+  if (!value || value === 'null') return null;
+  if (/^\d+$/.test(String(value))) return String(value);
+  const found = variations.find(v => normalizeMenuText(v.nombre) === normalizeMenuText(value) && /^\d+$/.test(String(v.id)));
+  if (found) return String(found.id);
+  if (normalizeMenuText(value) === 'normal') return null;
+  throw new Error('La preparación seleccionada no está disponible en la base de datos. Vuelve a seleccionar el producto.');
+}
+
 function preparationOptions(product) {
   if (quantityOnlyProduct(product)) return [];
-  if (onlyNormalProducts.includes(product.nombre)) {
-    return [{ id: 'Normal', nombre: 'Normal' }];
-  }
-  
-  ensureDefaultVariations();
-
-  return defaultPreparations.map((name) => {
-    const found = variations.find((v) => v.nombre.toLowerCase() === name.toLowerCase());
-    return found || { id: name, nombre: name };
-  });
+  const names = onlyNormalProducts.some(name => normalizeMenuText(name) === normalizeMenuText(product.nombre)) ? ['Normal'] : defaultPreparations;
+  return names.map(nombre => {
+    const saved = variations.find(v => normalizeMenuText(v.nombre) === normalizeMenuText(nombre) && /^\d+$/.test(String(v.id)));
+    return saved || (nombre === 'Normal' ? { id: '', nombre } : null);
+  }).filter(Boolean);
 }
 
 function addSelectedOrderItem() {
@@ -545,7 +544,7 @@ function addSelectedOrderItem() {
   const size = quantityOnlyProduct(product) ? null : product.producto_tamanos?.find((item) => String(item.id) === sizeSelect.value);
   const preparationSelect = document.querySelector('.order-preparation');
   const preparation = onlyNormalProducts.includes(product.nombre)
-    ? { id: 'Normal', nombre: 'Normal' }
+    ? preparationOptions(product)[0]
     : variations.find((item) => String(item.id) === preparationSelect.value || item.nombre === preparationSelect.options[preparationSelect.selectedIndex]?.textContent) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
   const quantity = Number(document.querySelector('.order-quantity').value) || 1;
   const item = document.createElement('div');
@@ -557,6 +556,8 @@ function addSelectedOrderItem() {
   item.dataset.price = size?.precio || product.precio || 0;
   item.innerHTML = `<span>${quantity} × ${product.nombre}${size && !quantityOnlyProduct(product) ? ` · ${size.nombre}` : ''}${preparation && !quantityOnlyProduct(product) ? ` · ${preparation.nombre}` : ''}</span><button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
   document.querySelector('.selected-order-items').appendChild(item);
+  enhanceOrderItem(item);
+  document.querySelector('.order-quantity').value = '1';
   productSelect.value = '';
   sizeSelect.innerHTML = '<option>Tamaño</option>';
   sizeSelect.disabled = true;
@@ -579,7 +580,9 @@ function updateEditableOrderItem(item) {
   if (!product) return;
   const quantity = item.querySelector('.selected-order-quantity');
   const preparation = item.querySelector('.selected-order-preparation');
-  item.dataset.quantity = Math.max(1, Number(quantity?.value) || 1);
+  item.dataset.quantity = orderQuantity(quantity?.value);
+  const minus = item.querySelector('[data-quantity-step="-1"]');
+  if (minus) minus.disabled = Number(item.dataset.quantity) <= 1;
   if (preparation) item.dataset.variationId = preparation.value || '';
   const size = product.producto_tamanos?.find((entry) => String(entry.id) === String(item.dataset.sizeId));
   const variation = preparation?.selectedOptions[0]?.textContent || '';
@@ -779,6 +782,7 @@ function openModal() {
     if (search) search.value = '';
   }
   form.querySelector('.selected-order-items').innerHTML = '';
+  renderOrderCatalog();
   updateOrderTotal();
   const titleEl = document.querySelector('#order-modal-title');
   const eyebrowEl = document.querySelector('#order-modal-eyebrow');
@@ -894,6 +898,7 @@ async function openEditOrderModal(databaseId) {
           : '';
         item.innerHTML = `<span class="selected-order-label">${detail.cantidad} × ${product.nombre}${sizeName ? ` · ${sizeName}` : ''}${prepName && prepName !== 'Normal' ? ` · ${prepName}` : ''}</span><input class="selected-order-quantity" type="number" min="1" value="${detail.cantidad}" aria-label="Cantidad" />${preparationMarkup}<button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
         itemsContainer.appendChild(item);
+        enhanceOrderItem(item);
       });
     }
     updateOrderTotal();
@@ -1015,6 +1020,7 @@ document.addEventListener('change', (event) => {
   }
   if (!event.target.matches('.order-product')) return;
   const product = products.find((item) => String(item.id) === event.target.value);
+  document.querySelector('.order-quantity').value = '1';
   const sizeControl = document.querySelector('[data-size-control]');
   const sizeSelect = document.querySelector('.order-size');
   const preparationControl = document.querySelector('[data-preparation-control]');
@@ -1048,6 +1054,8 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
     const type = form.querySelector('select').value === 'En mesa' ? 'MESA' : 'PARA_LLEVAR';
     const selectedItems = [...form.querySelectorAll('.selected-order-item')];
     if (!selectedItems.length) { showOrderError('Añade al menos un producto al pedido.'); return; }
+    try { selectedItems.forEach(item => { item.dataset.variationId = databaseVariationId(item.dataset.variationId) || ''; }); }
+    catch (error) { showOrderError(error.message); return; }
     const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.dataset.quantity) * Number(item.dataset.price), 0);
     const clientId = form.elements.cliente_id.value || null;
     const paid = form.elements.pagado.checked;
@@ -1083,7 +1091,7 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
         detailResponse = await supabaseClient.from('detalle_pedido').insert(details.map(({ tamano_id, ...detail }) => detail));
       }
       if (detailResponse.error) { showOrderError(`El pedido se actualizó, pero no se guardaron los productos: ${detailResponse.error.message}`); console.error(detailResponse.error); return; }
-      showToast('Pedido actualizado correctamente');
+
     } else {
       const { data: order, error } = await supabaseClient.from('pedidos').insert({
         cliente_id: clientId,
@@ -1098,6 +1106,7 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
 
       if (error) { showOrderError(`No se pudo crear el pedido: ${error.message}`); console.error(error); return; }
 
+      if (order?.id) form.elements.id.value = order.id;
       if (order && selectedItems.length) {
         const details = selectedItems.map((item) => ({
           pedido_id: order.id,
@@ -1114,11 +1123,12 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
         }
         if (detailResponse.error) { showOrderError(`El pedido se creó, pero no se guardaron sus productos: ${detailResponse.error.message}`); console.error(detailResponse.error); return; }
       }
-      showToast('Nuevo pedido creado');
+
     }
     await loadOrders();
   }
   closeModal();
+  if (supabaseClient) showSuccessConfirmation(orderId ? '¡Pedido actualizado!' : '¡Pedido registrado!', 'El pedido y sus productos se guardaron correctamente.');
 });
 
 document.querySelector('#product-form').addEventListener('submit', async (event) => {
@@ -1152,7 +1162,7 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
   }
   closeProductModal();
   await loadProducts();
-  showToast(id ? 'Producto actualizado' : 'Producto creado');
+  showSuccessConfirmation(id ? '¡Producto actualizado!' : '¡Producto registrado!');
 });
 
 document.querySelector('#client-form').addEventListener('submit', async (event) => {
@@ -1164,7 +1174,7 @@ document.querySelector('#client-form').addEventListener('submit', async (event) 
   if (response.error) { showToast('No se pudo guardar el cliente'); console.error(response.error); return; }
   closeClientModal();
   await loadClients();
-  showToast(id ? 'Cliente actualizado' : 'Cliente registrado');
+  showSuccessConfirmation(id ? '¡Cliente actualizado!' : '¡Cliente registrado!');
 });
 
 document.querySelector('#login-form').addEventListener('submit', async (event) => {

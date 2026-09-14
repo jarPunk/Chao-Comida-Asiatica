@@ -21,6 +21,12 @@ html { scrollbar-gutter: stable; }
 .modal .modal-body input:not([type="checkbox"]):not([type="hidden"]):not([type="radio"]), .modal .modal-body select, .modal .modal-body textarea { width: 100%; min-width: 0; max-width: 100%; background: #fff; border: 1px solid #8190a3; border-radius: 10px; color: var(--ink); font-size: 14px; line-height: 1.5; padding: 10px 12px; min-height: 44px; }
 .modal .modal-body input:focus, .modal .modal-body select:focus, .modal .modal-body textarea:focus { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--coral); box-shadow: 0 0 0 4px var(--coral-glow); }
 .modal:focus { outline: none; }
+#success-modal .success-dialog { width: min(440px, 100%); text-align: center; }
+#success-modal .modal-header { padding: 32px 32px 16px; border-bottom: 0; }
+#success-modal .success-symbol { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 20px; border-radius: 50%; color: #21613d; background: #e5f4eb; border: 1px solid #b9dec8; font-size: 40px; font-weight: 700; }
+#success-modal .modal-body { padding: 0 28px 24px; }
+#success-modal .modal-body p { margin: 0; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+#success-modal .modal-footer { grid-template-columns: 1fr; }
 .modal [data-drink-colors] { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
 .modal [data-drink-colors] legend { padding: 0 6px; font-weight: 700; font-size: 14px; }
 .modal [data-drink-colors] > p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
