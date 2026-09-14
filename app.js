@@ -91,6 +91,8 @@ function mapOrder(row) {
     customer,
     type: row.tipo_pedido === 'MESA' ? `Mesa ${row.mesas?.numero || ''}`.trim() : 'Para llevar',
     items,
+    details: row.detalle_pedido || [],
+    notes: row.notas || '',
     total: `Bs ${Number(row.total || 0).toFixed(2)}`,
     status,
     label: statusLabels[status],
@@ -104,7 +106,7 @@ async function loadOrders() {
   const { start, end } = getBoliviaDayRange();
   const { data, error } = await supabaseClient
     .from('pedidos')
-    .select('id, numero_ticket, tipo_pedido, estado, estado_pago, total, created_at, clientes(nombres, apellidos), mesas(numero), detalle_pedido(cantidad, productos(nombre), variaciones(nombre))')
+    .select('id, numero_ticket, tipo_pedido, estado, estado_pago, total, notas, created_at, clientes(nombres, apellidos), mesas(numero), detalle_pedido(cantidad, precio_unitario, productos(nombre), variaciones(nombre))')
     .gte('created_at', start)
     .lt('created_at', end)
     .order('created_at', { ascending: false });
@@ -332,6 +334,7 @@ function setupClientSearch() {
     picker.querySelector('[name="cliente_id"]').value = option.dataset.clientId;
     search.value = option.dataset.clientId ? option.querySelector('strong').textContent : '';
     picker.querySelector('.client-results').classList.remove('open');
+    updateOrderDetailsSummary();
   });
   if (!picker.querySelector('[data-quick-client]')) picker.insertAdjacentHTML('beforeend', '<button type="button" class="secondary-button quick-client-button" data-quick-client>＋ Nuevo cliente</button>');
   renderClientPicker();
@@ -500,7 +503,7 @@ function addOrderBuilder(form) {
   field.dataset.orderItems = 'true';
   field.className = 'order-items-builder';
   field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
-  form.querySelector('.modal-body').insertBefore(field, form.querySelector('.modal-body > label:last-of-type'));
+  form.querySelector('.modal-body').insertBefore(field, form.querySelector('.order-notes'));
   setupOrderCatalog(field);
   renderOrderProductOptions();
   refreshIcons();
@@ -657,7 +660,7 @@ function orderMarkup(order, compact = false) {
         <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
       </div>
     </div>
-    <h4>${order.customer}</h4><p>${order.items}</p>
+    <h4>${order.customer}</h4><p>${order.items}</p><button type="button" class="order-open-button" data-read-order="${order.id}" aria-label="Ver pedido ${order.id} completo">Ver pedido completo</button>
     <div class="board-card-bottom">
       <strong>${order.total}</strong>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
@@ -793,6 +796,9 @@ function openModal() {
   if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Crear pedido';
   if (deleteBtn) deleteBtn.hidden = true;
   refreshIcons();
+  updateOrderDetailsSummary();
+  form.querySelector('.order-details').open = !form.elements.id.value;
+  form.querySelector('.order-notes').open = false;
   showDialog('order-modal');
 }
 
@@ -868,7 +874,7 @@ async function openEditOrderModal(databaseId) {
   const currentOrder = orderRaw || localOrder;
   if (currentOrder) {
     form.elements.pagado.checked = (orderRaw ? orderRaw.estado_pago : localOrder.payment) === 'PAGADO';
-    const typeSelect = form.querySelector('select');
+    const typeSelect = form.elements.tipo_pedido;
     if (typeSelect) {
       const isMesa = orderRaw ? orderRaw.tipo_pedido === 'MESA' : localOrder.type.startsWith('Mesa');
       typeSelect.value = isMesa ? 'En mesa' : 'Para llevar';
@@ -905,6 +911,9 @@ async function openEditOrderModal(databaseId) {
   }
 
   refreshIcons();
+  updateOrderDetailsSummary();
+  form.querySelector('.order-details').open = !form.elements.id.value;
+  form.querySelector('.order-notes').open = false;
   showDialog('order-modal');
 }
 
@@ -1051,7 +1060,7 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
   addOrderBuilder(form);
   const orderId = form.elements.id.value;
   if (supabaseClient) {
-    const type = form.querySelector('select').value === 'En mesa' ? 'MESA' : 'PARA_LLEVAR';
+    const type = form.elements.tipo_pedido.value === 'En mesa' ? 'MESA' : 'PARA_LLEVAR';
     const selectedItems = [...form.querySelectorAll('.selected-order-item')];
     if (!selectedItems.length) { showOrderError('Añade al menos un producto al pedido.'); return; }
     try { selectedItems.forEach(item => { item.dataset.variationId = databaseVariationId(item.dataset.variationId) || ''; }); }

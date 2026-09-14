@@ -2,17 +2,39 @@ function orderQuantity(value) {
   return Math.min(9999, Math.max(1, Math.floor(Number(value) || 1)));
 }
 
+function showOrderReading(id) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  let backdrop = document.querySelector('#order-reading-modal');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'order-reading-modal';
+    backdrop.className = 'modal-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    backdrop.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="order-reading-title" tabindex="-1"><header class="modal-header"><button class="modal-close" type="button" aria-label="Cerrar detalle">×</button><p class="eyebrow">Detalle del pedido</p><h2 id="order-reading-title"></h2></header><div class="modal-body"></div><footer class="modal-footer"><strong class="reading-total"></strong><button type="button" class="primary-button" data-modal-cancel>Cerrar</button></footer></div>';
+    document.body.append(backdrop);
+  }
+  backdrop.querySelector('h2').textContent = `Pedido #${order.id}`;
+  const lines = order.details?.length ? order.details.map(d => `<li><strong>${menuEscape(d.cantidad)} × ${menuEscape(d.productos?.nombre || 'Producto')}</strong>${d.variaciones?.nombre ? `<span>${menuEscape(d.variaciones.nombre)}</span>` : ''}${d.precio_unitario != null ? `<span>Bs ${(Number(d.cantidad) * Number(d.precio_unitario)).toFixed(2)}</span>` : ''}</li>`).join('') : `<li>${menuEscape(order.items)}</li>`;
+  backdrop.querySelector('.modal-body').innerHTML = `<div class="reading-customer"><strong>${menuEscape(order.customer)}</strong><p>${menuEscape(order.type)} · ${menuEscape(order.label)} · ${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</p></div><ul class="reading-items">${lines}</ul>${order.notes ? `<section class="reading-notes"><h3>Notas</h3><p>${menuEscape(order.notes)}</p></section>` : ''}`;
+  backdrop.querySelector('.reading-total').textContent = `Total: ${order.total}`;
+  showDialog('order-reading-modal');
+}
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-read-order]');
+  if (button) showOrderReading(button.dataset.readOrder);
+});
+
 function renderOrderCatalog() {
   const grid = document.querySelector('.order-catalog-grid');
   if (!grid) return;
-  const term = normalizeMenuText(document.querySelector('[data-order-search]').value.trim());
   const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'todos';
-  const list = products.filter(p => p.activo && !p.menuOnly && normalizeMenuText(p.nombre).includes(term) && (category === 'todos' || (category === 'extras' ? isChickenExtra(p) || p.tipo === 'EXTRA' : category === 'bebidas' ? p.tipo === 'BEBIDA' : p.tipo === 'PLATO' && !isChickenExtra(p))));
-  grid.innerHTML = list.map(p => `<button type="button" class="order-product-card" data-order-card="${menuEscape(p.id)}" aria-label="Añadir ${menuEscape(p.nombre)}">${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <span aria-hidden="true">＋</span></span></button>`).join('') || '<p class="catalog-empty">No hay productos disponibles con ese nombre.</p>';
+  const list = products.filter(p => p.activo && !p.menuOnly && (category === 'todos' || (category === 'extras' ? isChickenExtra(p) || p.tipo === 'EXTRA' : category === 'bebidas' ? p.tipo === 'BEBIDA' : p.tipo === 'PLATO' && !isChickenExtra(p))));
+  grid.innerHTML = list.map(p => `<button type="button" class="order-product-card" data-order-card="${menuEscape(p.id)}" aria-label="Añadir ${menuEscape(p.nombre)}">${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <span aria-hidden="true">＋</span></span></button>`).join('') || '<p class="catalog-empty">No hay productos disponibles en esta categoría.</p>';
 }
 
 function setupOrderCatalog(field) {
-  field.insertAdjacentHTML('afterbegin', '<div class="order-catalog"><label>Buscar en la carta<input type="search" data-order-search placeholder="Nombre del plato o refresco" /></label><div class="order-category-filters" role="group" aria-label="Categorías">'+[['todos','Todos'],['platos','Platos'],['bebidas','Bebidas'],['extras','Extras']].map(([key,label])=>`<button type="button" data-order-category="${key}" class="${key==='todos'?'active':''}" aria-pressed="${key==='todos'}">${label}</button>`).join('')+'</div><div class="order-catalog-grid"></div><p class="order-catalog-hint">Toca un producto para añadirlo. Ajusta sus opciones en la comanda.</p></div><h3 class="comanda-title">Tu comanda</h3>');
+  field.insertAdjacentHTML('afterbegin', '<div class="order-catalog"><div class="order-category-filters" role="group" aria-label="Categorías">'+[['todos','Todos'],['platos','Platos'],['bebidas','Bebidas'],['extras','Extras']].map(([key,label])=>`<button type="button" data-order-category="${key}" class="${key==='todos'?'active':''}" aria-pressed="${key==='todos'}">${label}</button>`).join('')+'</div><div class="order-catalog-grid"></div><p class="order-catalog-hint">Toca un producto para añadirlo. Ajusta sus opciones en la comanda.</p></div><h3 class="comanda-title">Tu comanda</h3>');
   field.querySelector('.order-item-row').hidden = true;
   renderOrderCatalog();
 }
@@ -38,6 +60,7 @@ document.addEventListener('click', event => {
     document.querySelector('.order-quantity').value = '1';
     addSelectedOrderItem();
     showOrderError('');
+    document.querySelector('.order-details').open = false;
     showToast('Producto añadido a la comanda');
   }
   const category = event.target.closest('[data-order-category]');
@@ -59,7 +82,7 @@ document.addEventListener('click', event => {
   }
 });
 document.addEventListener('input', event => {
-  if (event.target.matches('[data-order-search]')) renderOrderCatalog();
+  if (event.target.closest('#order-form')) updateOrderDetailsSummary();
   if (event.target.matches('.selected-order-quantity, .order-quantity')) {
     event.target.value = event.target.value.replace(/[^0-9]/g, '').slice(0,4);
     const item = event.target.closest('.selected-order-item');
@@ -109,7 +132,28 @@ document.addEventListener('submit', async event => {
     search.dispatchEvent(new Event('input', { bubbles: true }));
     search.focus({ preventScroll: true });
     order.querySelector('.client-results').classList.remove('open');
+    updateOrderDetailsSummary();
     showSuccessConfirmation('¡Cliente registrado!', `${nombre} ${apellidos} ya está seleccionado en tu pedido. Puedes continuar con la comanda.`);
   } catch (err) { error.textContent = err.message; }
   finally { button.disabled = false; }
+});
+
+function updateOrderDetailsSummary() {
+  const form = document.querySelector('#order-form');
+  if (!form?.querySelector('[data-order-summary]')) return;
+  const client = clients.find(c => String(c.id) === form.elements.cliente_id?.value);
+  const name = client ? `${client.nombres} ${client.apellidos}`.trim() : 'Cliente ocasional';
+  form.querySelector('[data-order-summary]').textContent = `${name} · ${form.elements.tipo_pedido.value}${form.elements.pagado.checked ? ' · Pagado' : ''}`;
+  form.querySelector('[data-notes-summary]').textContent = form.querySelector('textarea').value.trim() ? 'Con indicaciones' : 'Opcional';
+}
+document.addEventListener('change', event => {
+  if (event.target.closest('#order-form')) updateOrderDetailsSummary();
+});
+document.addEventListener('click', event => {
+  if (event.target.closest('[data-complete-order-details]')) {
+    const details = document.querySelector('.order-details');
+    updateOrderDetailsSummary();
+    details.open = false;
+    details.querySelector('summary').focus();
+  }
 });

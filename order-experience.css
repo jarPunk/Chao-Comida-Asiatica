@@ -26,6 +26,28 @@ input, select, textarea, .modal input, .modal select, .modal textarea { font-siz
 #order-modal .order-line-options:empty { display: none; }
 #order-modal .selected-order-item > .remove-order-item { grid-column: 3; grid-row: 1; font-size: 24px; }
 .quick-client-button { margin-top: 8px; min-height: 44px; }
+.board-card { position: relative; }
+.board-card .order-open-button { background: transparent; color: var(--coral-dark); padding: 8px 0; font-size: 13px; font-weight: 600; cursor: pointer; }
+.board-card .order-open-button::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.board-card .order-open-button:focus-visible { outline: none; }
+.board-card .order-open-button:focus-visible::after { outline: 3px solid var(--coral); outline-offset: 3px; }
+.board-card .card-actions button, .board-card-bottom button { position: relative; z-index: 1; }
+.board-card:has(.order-open-button:hover) { border-color: var(--coral); }
+#order-reading-modal .modal { width: min(680px, 100%); }
+#order-reading-modal .modal-body { padding: 24px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.reading-customer > strong { font-size: 21px; overflow-wrap: anywhere; }
+.reading-customer p { color: var(--muted); line-height: 1.6; }
+.reading-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.reading-items li { display: grid; gap: 6px; padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+.reading-items li span { font-size: 15px; color: var(--muted); }
+.reading-notes p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.reading-total { align-self: center; font-size: 19px; overflow-wrap: anywhere; }
+.order-details, .order-notes { border: 1px solid var(--line); border-radius: 12px; background: white; }
+.order-details > summary, .order-notes > summary { padding: 14px 16px; cursor: pointer; color: var(--ink); min-height: 48px; }
+.order-details > summary strong, .order-notes > summary strong { font-size: 14px; }
+.order-details > summary span, .order-notes > summary span { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.order-details-content { display: grid; gap: 14px; padding: 0 16px 16px; }
+.order-details > summary:focus-visible, .order-notes > summary:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; border-radius: 12px; }
 #toast { z-index: 150; top: 20px; bottom: auto; max-width: calc(100vw - 24px); white-space: normal; pointer-events: none; }
 @media (max-width: 640px) {
   .order-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
