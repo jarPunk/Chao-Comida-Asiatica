@@ -347,6 +347,7 @@ function renderClients() {
   const active = clients.filter((client) => client.activo).length;
   clientView.querySelector('.client-summary > div:first-child strong').textContent = active;
   clientView.querySelector('.client-summary > div:nth-child(2) strong').textContent = new Set(clients.filter((client) => client.familia_id).map((client) => client.familia_id)).size;
+  clientView.querySelector('.client-summary > div:nth-child(3) strong').textContent = clients.filter((client) => String(client.telefono || '').trim()).length;
   body.innerHTML = clients.length
     ? clients.map((client) => `<tr>
         <td><div class="table-person"><span class="avatar peach">${(client.nombres[0] || '').toUpperCase()}${(client.apellidos[0] || '').toUpperCase()}</span><strong>${client.nombres} ${client.apellidos}</strong></div></td>
@@ -712,7 +713,7 @@ function showToast(message = 'Pedido actualizado') {
 }
 function updateMetric() {
   const metricValues = document.querySelectorAll('.metric-card>strong');
-  if (supabaseClient && metricValues.length >= 4) {
+  if (metricValues.length >= 4) {
     metricValues[0].textContent = orders.length;
     const sales = orders.reduce((sum, order) => sum + Number(order.total.replace('Bs ', '')), 0);
     metricValues[1].textContent = `Bs ${sales.toFixed(2)}`;
