@@ -582,13 +582,13 @@ function updateEditableOrderItem(item) {
   const product = products.find((entry) => String(entry.id) === String(item.dataset.productId));
   if (!product) return;
   const quantity = item.querySelector('.selected-order-quantity');
-  const preparation = item.querySelector('.selected-order-preparation');
+  const preparation = item.querySelector('.selected-order-preparation:checked');
   item.dataset.quantity = orderQuantity(quantity?.value);
   const minus = item.querySelector('[data-quantity-step="-1"]');
   if (minus) minus.disabled = Number(item.dataset.quantity) <= 1;
   if (preparation) item.dataset.variationId = preparation.value || '';
   const size = product.producto_tamanos?.find((entry) => String(entry.id) === String(item.dataset.sizeId));
-  const variation = preparation?.selectedOptions[0]?.textContent || '';
+  const variation = preparation?.dataset.preparationName || '';
   item.querySelector('.selected-order-label').textContent = `${item.dataset.quantity} × ${product.nombre}${size ? ` · ${size.nombre}` : ''}${variation && variation !== 'Normal' ? ` · ${variation}` : ''}`;
   updateOrderTotal();
 }
@@ -818,10 +818,17 @@ async function openEditOrderModal(databaseId) {
       .eq('id', databaseId)
       .single();
     if (!error && data) {
-      const { data: details, error: detailsError } = await supabaseClient
+      let detailsResponse = await supabaseClient
         .from('detalle_pedido')
-        .select('id, producto_id, variacion_id, cantidad, precio_unitario')
+        .select('id, producto_id, tamano_id, variacion_id, cantidad, precio_unitario')
         .eq('pedido_id', databaseId);
+      if (detailsResponse.error?.message?.includes('tamano_id')) {
+        detailsResponse = await supabaseClient
+          .from('detalle_pedido')
+          .select('id, producto_id, variacion_id, cantidad, precio_unitario')
+          .eq('pedido_id', databaseId);
+      }
+      const { data: details, error: detailsError } = detailsResponse;
       if (!detailsError) {
         data.detalle_pedido = details || [];
         orderRaw = data;
@@ -1183,7 +1190,7 @@ document.querySelector('#client-form').addEventListener('submit', async (event) 
   if (response.error) { showToast('No se pudo guardar el cliente'); console.error(response.error); return; }
   closeClientModal();
   await loadClients();
-  showSuccessConfirmation(id ? '¡Cliente actualizado!' : '¡Cliente registrado!');
+  showSuccessConfirmation(id ? '¡Cliente actualizado!' : '¡Cliente registrado!', 'Los datos se guardaron correctamente.', { brief: !id });
 });
 
 document.querySelector('#login-form').addEventListener('submit', async (event) => {

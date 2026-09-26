@@ -4,22 +4,26 @@ let dialogOpener = null;
 let backgroundWasInert = false;
 const dialogStack = [];
 
-function showSuccessConfirmation(message, detail = 'Los datos se guardaron correctamente.') {
+function showSuccessConfirmation(message, detail = 'Los datos se guardaron correctamente.', { brief = false } = {}) {
   let backdrop = document.querySelector('#success-modal');
   if (!backdrop) {
     backdrop = document.createElement('div');
     backdrop.id = 'success-modal';
     backdrop.className = 'modal-backdrop';
     backdrop.setAttribute('aria-hidden', 'true');
-    backdrop.innerHTML = '<div class="modal success-dialog" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" tabindex="-1"><header class="modal-header"><button type="button" class="modal-close" aria-label="Cerrar confirmación">×</button><span class="success-symbol" aria-hidden="true">✓</span><h2 id="success-title"></h2></header><div class="modal-body"><p id="success-description"></p></div><footer class="modal-footer"><button type="button" class="primary-button" data-modal-cancel>Continuar</button></footer></div>';
+    backdrop.innerHTML = '<div class="modal success-dialog" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" tabindex="-1"><header class="modal-header"><button type="button" class="modal-close" aria-label="Cerrar confirmación">×</button><span class="success-symbol" aria-hidden="true">✓</span><h2 id="success-title"></h2></header><div class="modal-body"><p id="success-description"></p><span class="confirmation-caption">Esta confirmaci&oacute;n se cierra en 3 segundos.</span></div><footer class="modal-footer"><button type="button" class="primary-button" data-modal-cancel>Continuar</button></footer></div>';
     document.body.append(backdrop);
   }
   backdrop.querySelector('#success-title').textContent = message;
   backdrop.querySelector('#success-description').textContent = detail;
+  backdrop.classList.toggle('brief-confirmation', brief);
+  backdrop.querySelector('.modal-close').hidden = brief;
+  backdrop.querySelector('.modal-footer').hidden = brief;
+  backdrop.querySelector('.confirmation-caption').hidden = brief;
   document.querySelector('#toast')?.classList.remove('show');
   showDialog('success-modal', { nested: Boolean(activeDialog) });
   window.clearTimeout(showSuccessConfirmation.timeout);
-  showSuccessConfirmation.timeout = window.setTimeout(() => hideDialog('success-modal'), 3000);
+  showSuccessConfirmation.timeout = window.setTimeout(() => hideDialog('success-modal'), brief ? 800 : 3000);
 }
 
 function showDialog(id, { nested = false } = {}) {
@@ -41,6 +45,7 @@ function showDialog(id, { nested = false } = {}) {
   backdrop.setAttribute('aria-hidden', 'false');
   backdrop.querySelector('.modal-body').scrollTop = 0;
   updateDialogSelectLabels(backdrop);
+  backdrop.querySelector('.modal-close').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
   backdrop.querySelector('.modal').focus({ preventScroll: true });
 }
 

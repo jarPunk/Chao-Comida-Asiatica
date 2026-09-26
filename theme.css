@@ -6,6 +6,16 @@
   --ink: #182230;
   --muted: #526175;
   --line: #dbe2eb;
+  --control-line: #7e8c9e;
+  --success-ink: #21613d;
+  --success-surface: #e8f5ed;
+  --success-line: #b9dec8;
+  --warning-ink: #86430c;
+  --warning-surface: #fff2df;
+  --warning-line: #ebcc9e;
+  --info-ink: #234b83;
+  --info-surface: #edf4ff;
+  --info-line: #c4d7f1;
   --coral: #c73536;
   --coral-dark: #a5252b;
   --coral-soft: #fff0f0;
@@ -149,3 +159,48 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* A compact navigation rail on desktop and a dismissible drawer on mobile. */
+.sidebar-toggle { width: 44px; height: 44px; flex: 0 0 44px; margin-right: 16px; }
+.sidebar-toggle svg, .sidebar-close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sidebar-close, .sidebar-shade { display: none; }
+.sidebar .nav-item { min-height: 46px; }
+.sidebar .nav-item svg { flex-shrink: 0; }
+@media (min-width: 761px) {
+  .sidebar { transition: width 180ms ease, padding 180ms ease; }
+  .sidebar-collapsed .sidebar { width: 80px; padding: 26px 12px 20px; }
+  .sidebar-collapsed .sidebar .brand { padding: 0; justify-content: center; }
+  .sidebar-collapsed .sidebar .brand > div,
+  .sidebar-collapsed .sidebar .service-status,
+  .sidebar-collapsed .sidebar .nav-item > span,
+  .sidebar-collapsed .sidebar .nav-count,
+  .sidebar-collapsed .sidebar .user-card > div,
+  .sidebar-collapsed .sidebar .user-card > svg,
+  .sidebar-collapsed .sidebar .user-card > i { display: none; }
+  .sidebar-collapsed .main-nav { margin-top: 30px; }
+  .sidebar-collapsed .sidebar .nav-item { padding: 12px; justify-content: center; }
+  .sidebar-collapsed .sidebar .user-card { padding: 16px 0 0; justify-content: center; }
+  .sidebar-collapsed .main-content { width: calc(100% - 80px); }
+}
+@media (max-width: 760px) {
+  body { padding-bottom: 0; }
+  body.navigation-open { overflow: hidden; }
+  #main-sidebar { display: flex; position: fixed; inset: 0 auto 0 0; width: min(288px, calc(100vw - 48px)); height: 100dvh; padding: 26px 20px 20px; overflow-y: auto; z-index: 70; background: var(--panel); border-right: 1px solid var(--line); box-shadow: 12px 0 40px #18223024; transform: translateX(-105%); visibility: hidden; transition: transform 180ms ease, visibility 180ms; }
+  .sidebar-open #main-sidebar { transform: translateX(0); visibility: visible; }
+  #main-sidebar { border-top: 0; }
+  #main-sidebar > .brand, #main-sidebar > .service-status { display: flex; }
+  #main-sidebar > .sidebar-bottom { display: block; }
+  #main-sidebar .main-nav { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  #main-sidebar .main-nav .nav-item { justify-content: flex-start; flex-direction: row; gap: 13px; padding: 12px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; text-align: left; }
+  #main-sidebar .main-nav .nav-count { position: static; margin-left: auto; transform: none; padding: 3px 7px; font-size: 11px; }
+  .sidebar .brand { padding-right: 36px; }
+  .sidebar .brand div span { font-size: 9px; }
+  .sidebar-close { display: grid; position: absolute; top: 24px; right: 14px; width: 44px; height: 44px; }
+  .sidebar-shade:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 69; background: rgb(24 34 48 / 40%); border: 0; border-radius: 0; padding: 0; }
+  .topbar { gap: 10px; }
+  .sidebar-toggle { margin-right: 0; }
+  .mobile-brand { margin-right: auto; }
+  .topbar-actions { gap: 8px; }
+  .topbar-actions > .icon-button[aria-label="Buscar"] { display: none; }
+}
+@media (max-width: 380px) { .mobile-brand > strong { display: none; } }

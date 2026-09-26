@@ -11,13 +11,19 @@ function showOrderReading(id) {
     backdrop.id = 'order-reading-modal';
     backdrop.className = 'modal-backdrop';
     backdrop.setAttribute('aria-hidden', 'true');
-    backdrop.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="order-reading-title" tabindex="-1"><header class="modal-header"><button class="modal-close" type="button" aria-label="Cerrar detalle">×</button><p class="eyebrow">Detalle del pedido</p><h2 id="order-reading-title"></h2></header><div class="modal-body"></div><footer class="modal-footer"><strong class="reading-total"></strong><button type="button" class="primary-button" data-modal-cancel>Cerrar</button></footer></div>';
+    backdrop.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="order-reading-title" tabindex="-1"><header class="modal-header"><button class="modal-close" type="button" aria-label="Cerrar detalle">×</button><p class="eyebrow">Detalle del pedido</p><h2 id="order-reading-title"></h2></header><dl class="reading-status-bar" aria-label="Entrega y pago"></dl><div class="modal-body"></div><footer class="modal-footer"><div class="reading-total"><span>Total del pedido</span><strong></strong></div><button type="button" class="primary-button" data-modal-cancel>Cerrar</button></footer></div>';
     document.body.append(backdrop);
   }
   backdrop.querySelector('h2').textContent = `Pedido #${order.id}`;
+  const isDineIn = /^(mesa\b|en mesa\b)/i.test(order.type || '');
+  const serviceLabel = isDineIn ? (order.type === 'Mesa' ? 'En mesa' : order.type) : order.type;
+  const paid = order.payment === 'PAGADO';
+  const serviceIcon = isDineIn ? '<path d="M4 10h16M6 10v10m12-10v10M8 10V4h8v6"/>' : '<path d="M5 7h14l1 13H4L5 7Zm4 0V5a3 3 0 0 1 6 0v2"/>';
+  const paymentIcon = paid ? '<path d="m7 12 3 3 7-7"/>' : '<path d="M12 7v6m0 3h.01"/>';
+  backdrop.querySelector('.reading-status-bar').innerHTML = `<div class="reading-status reading-service"><dt>Tipo de pedido</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true">${serviceIcon}</svg><span>${menuEscape(serviceLabel)}</span></dd></div><div class="reading-status ${paid ? 'reading-paid' : 'reading-unpaid'}"><dt>Estado de pago</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/>${paymentIcon}</svg><span>${paid ? 'Pagado' : 'Sin pagar'}</span></dd></div>`;
   const lines = order.details?.length ? order.details.map(d => `<li><strong>${menuEscape(d.cantidad)} × ${menuEscape(d.productos?.nombre || 'Producto')}</strong>${d.variaciones?.nombre ? `<span>${menuEscape(d.variaciones.nombre)}</span>` : ''}${d.precio_unitario != null ? `<span>Bs ${(Number(d.cantidad) * Number(d.precio_unitario)).toFixed(2)}</span>` : ''}</li>`).join('') : `<li>${menuEscape(order.items)}</li>`;
-  backdrop.querySelector('.modal-body').innerHTML = `<div class="reading-customer"><strong>${menuEscape(order.customer)}</strong><p>${menuEscape(order.type)} · ${menuEscape(order.label)} · ${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</p></div><ul class="reading-items">${lines}</ul>${order.notes ? `<section class="reading-notes"><h3>Notas</h3><p>${menuEscape(order.notes)}</p></section>` : ''}`;
-  backdrop.querySelector('.reading-total').textContent = `Total: ${order.total}`;
+  backdrop.querySelector('.modal-body').innerHTML = `<div class="reading-customer"><strong>${menuEscape(order.customer)}</strong><p>Estado de cocina: <strong>${menuEscape(order.label)}</strong></p></div><ul class="reading-items">${lines}</ul>${order.notes ? `<section class="reading-notes"><h3>Notas</h3><p>${menuEscape(order.notes)}</p></section>` : ''}`;
+  backdrop.querySelector('.reading-total strong').textContent = order.total;
   showDialog('order-reading-modal');
 }
 document.addEventListener('click', event => {
@@ -39,15 +45,22 @@ function setupOrderCatalog(field) {
   renderOrderCatalog();
 }
 
+let orderOptionGroup = 0;
+
 function enhanceOrderItem(item) {
   const product = products.find(p => String(p.id) === item.dataset.productId);
   if (!product) return;
   const choices = preparationOptions(product);
   const sizes = quantityOnlyProduct(product) ? [] : product.producto_tamanos || [];
   const quantity = orderQuantity(item.dataset.quantity);
+  const group = ++orderOptionGroup;
   item.dataset.quantity = quantity;
   if (quantityOnlyProduct(product)) { item.dataset.sizeId = ''; item.dataset.variationId = ''; }
-  item.innerHTML = `<span class="selected-order-label"></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizes.length ? `<label>Tamaño<select class="selected-order-size">${sizes.map(s=>`<option value="${menuEscape(s.id)}" ${String(s.id)===item.dataset.sizeId?'selected':''}>${menuEscape(s.nombre)} · Bs ${Number(s.precio).toFixed(2)}</option>`).join('')}</select></label>` : ''}${choices.length>1 ? `<label>Preparación<select class="selected-order-preparation">${choices.map(p=>`<option value="${menuEscape(p.id)}" ${String(p.id)===item.dataset.variationId?'selected':''}>${menuEscape(p.nombre)}</option>`).join('')}</select></label>` : ''}</div><button type="button" class="remove-order-item" aria-label="Quitar ${menuEscape(product.nombre)}">×</button>`;
+  const selectedSize = sizes.find(s => String(s.id) === item.dataset.sizeId);
+  const selectedPreparation = choices.find(p => String(p.id) === item.dataset.variationId) || (!item.dataset.variationId ? choices[0] : null);
+  const sizeOptions = sizes.length ? `<fieldset class="order-option-group"><legend>Tamaño</legend><div class="order-option-buttons">${sizes.map(s => `<label class="order-option-button"><input class="order-option-input selected-order-size" type="radio" name="order-size-${group}" value="${menuEscape(s.id)}" ${s === selectedSize ? 'checked' : ''}><span class="order-option-label"><span class="order-option-text">${menuEscape(s.nombre)}<span class="order-option-price">Bs ${Number(s.precio).toFixed(2)}</span></span></span></label>`).join('')}</div></fieldset>` : '';
+  const preparationOptionsMarkup = choices.length > 1 ? `<fieldset class="order-option-group"><legend>Preparación</legend><div class="order-option-buttons">${choices.map(p => `<label class="order-option-button"><input class="order-option-input selected-order-preparation" type="radio" name="order-preparation-${group}" value="${menuEscape(p.id)}" data-preparation-name="${menuEscape(p.nombre)}" ${p === selectedPreparation ? 'checked' : ''}><span class="order-option-label"><span class="order-option-text">${menuEscape(p.nombre)}</span></span></label>`).join('')}</div></fieldset>` : '';
+  item.innerHTML = `<span class="selected-order-label"></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizeOptions}${preparationOptionsMarkup}</div><button type="button" class="remove-order-item" aria-label="Quitar ${menuEscape(product.nombre)}">×</button>`;
   updateEditableOrderItem(item);
 }
 
@@ -96,7 +109,7 @@ document.addEventListener('focusout', event => {
   if (event.target.matches('.selected-order-quantity, .order-quantity')) event.target.value = orderQuantity(event.target.value);
 });
 document.addEventListener('change', event => {
-  if (event.target.matches('.selected-order-size')) {
+  if (event.target.matches('.selected-order-size:checked')) {
     const item = event.target.closest('.selected-order-item');
     const p = products.find(p=>String(p.id)===item.dataset.productId);
     const size = p?.producto_tamanos?.find(s=>String(s.id)===event.target.value);
@@ -133,7 +146,7 @@ document.addEventListener('submit', async event => {
     search.focus({ preventScroll: true });
     order.querySelector('.client-results').classList.remove('open');
     updateOrderDetailsSummary();
-    showSuccessConfirmation('¡Cliente registrado!', `${nombre} ${apellidos} ya está seleccionado en tu pedido. Puedes continuar con la comanda.`);
+    showSuccessConfirmation('¡Cliente registrado!', 'Ya está seleccionado en tu pedido.', { brief: true });
   } catch (err) { error.textContent = err.message; }
   finally { button.disabled = false; }
 });
