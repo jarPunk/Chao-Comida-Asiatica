@@ -6,7 +6,7 @@ const supabaseClient = window.supabase && supabaseConfig.url && supabaseConfig.a
   : null;
 let isAuthenticated = !supabaseClient;
 const statusOrder = ['pendiente', 'preparacion', 'listo'];
-const statusLabels = { pendiente: 'Pendiente', preparacion: 'En preparación', listo: 'Listo' };
+const statusLabels = { pendiente: 'Pendiente', preparacion: 'En preparación', listo: 'Listo', entregado: 'Entregado' };
 const iconForType = (type) => type.startsWith('Mesa') ? 'armchair' : 'shopping-bag';
 let products = [];
 let clients = [];
@@ -97,7 +97,7 @@ function mapOrder(row) {
     const variation = detail.variaciones?.nombre && detail.variaciones.nombre !== 'Normal' ? ` ${detail.variaciones.nombre}` : '';
     return `${detail.cantidad} ${product}${sizeLabel}${variation}`;
   }).join(' · ') || 'Sin productos registrados';
-  const status = { PENDIENTE: 'pendiente', EN_PREPARACION: 'preparacion', LISTO: 'listo' }[row.estado] || 'pendiente';
+  const status = { PENDIENTE: 'pendiente', EN_PREPARACION: 'preparacion', LISTO: 'listo', ENTREGADO: 'entregado' }[row.estado] || 'pendiente';
   return {
     id: String(row.numero_ticket || row.id).padStart(6, '0'),
     databaseId: row.id,
@@ -735,6 +735,18 @@ function orderMarkup(order, compact = false) {
       </div>
     </article>`;
   }
+  if (order.status === 'listo') {
+    return `<article class="board-card listo-mini status-${order.status}" data-order-id="${order.id}">
+    <button type="button" class="mini-main" data-read-order="${order.id}" aria-label="Ver pedido ${order.id} completo">
+      <span class="mini-number">#${order.id}</span>
+      <strong class="mini-customer">${order.customer}</strong>
+      <span class="mini-total">${order.total}</span>
+    </button>
+    <button class="payment-status mini ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'S/pagar'}</button>
+    <button class="check-button mini" data-advance="${order.id}"><i data-lucide="check"></i>Entregado</button>
+    <button class="btn-action danger mini" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
+  </article>`;
+  }
   return `<article class="board-card status-${order.status}" data-order-id="${order.id}">
     <div class="board-card-top">
       <span>#${order.id}</span>
@@ -748,14 +760,15 @@ function orderMarkup(order, compact = false) {
     <div class="board-card-bottom">
       <strong>${order.total}</strong>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
-      <button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregar' : 'Avanzar'}</button>
+      <button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregado' : 'Avanzar'}</button>
     </div>
   </article>`;
 }
 
 function renderHomeOrders() {
-  document.querySelector('#orders-list').innerHTML = orders.length
-    ? orders.slice(0, 5).map((order) => orderMarkup(order, true)).join('')
+  const active = orders.filter((order) => order.status !== 'entregado');
+  document.querySelector('#orders-list').innerHTML = active.length
+    ? active.slice(0, 5).map((order) => orderMarkup(order, true)).join('')
     : '<div class="empty-state"><i data-lucide="receipt-text"></i><strong>Aún no hay pedidos</strong><span>Registra el primero para verlo aquí.</span></div>';
   refreshIcons();
 }
@@ -768,7 +781,7 @@ function renderBoard(filter = 'todos') {
     return `<section class="order-column"><h3>${statusLabels[status]} <span>${columnOrders.length}</span></h3>${columnOrders.length ? columnOrders.map((order) => orderMarkup(order)).join('') : '<p class="empty-column">No hay pedidos aquí</p>'}</section>`;
   }).join('');
   document.querySelectorAll('.segmented-control button[data-filter]').forEach((button) => {
-    const count = button.dataset.filter === 'todos' ? orders.length : orders.filter((order) => order.status === button.dataset.filter).length;
+    const count = button.dataset.filter === 'todos' ? orders.filter((order) => order.status !== 'entregado').length : orders.filter((order) => order.status === button.dataset.filter).length;
     button.innerHTML = `${button.dataset.filter === 'todos' ? 'Todos' : statusLabels[button.dataset.filter]} <b>${count}</b>`;
   });
   refreshIcons();
@@ -818,19 +831,27 @@ function updateMetric() {
     document.querySelectorAll('.metric-trend').forEach((trend) => { trend.textContent = 'Datos actuales'; });
   }
   const pending = document.querySelector('#pending-metric');
-  if (pending) pending.textContent = orders.filter((order) => order.status !== 'listo').length;
+  if (pending) pending.textContent = orders.filter((order) => order.status === 'pendiente' || order.status === 'preparacion').length;
   renderStats();
 }
 async function advanceOrder(id) {
   const order = orders.find((item) => item.id === id);
-  if (!order) return;
+  if (!order || !statusOrder.includes(order.status)) return;
   const nextIndex = Math.min(statusOrder.indexOf(order.status) + 1, statusOrder.length - 1);
   if (order.status === 'listo') {
     if (supabaseClient) {
-      const { error } = await supabaseClient.from('pedidos').update({ estado: 'ENTREGADO', entregado_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', order.databaseId);
-      if (error) { showToast('No se pudo actualizar el pedido'); return; }
+      let { error } = await supabaseClient.from('pedidos').update({ estado: 'ENTREGADO', entregado_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', order.databaseId);
+      if (error?.message?.includes('entregado_at')) {
+        ({ error } = await supabaseClient.from('pedidos').update({ estado: 'ENTREGADO', updated_at: new Date().toISOString() }).eq('id', order.databaseId));
+      }
+      if (error) { showToast('No se pudo marcar como entregado'); console.error(error); return; }
     }
-    showToast(`Pedido #${id} marcado como entregado`);
+    order.status = 'entregado';
+    order.label = statusLabels.entregado;
+    renderHomeOrders();
+    renderBoard(document.querySelector('.segmented-control button.active')?.dataset.filter || 'todos');
+    updateMetric();
+    showToast(`Pedido #${id} entregado`);
     return;
   }
   const nextStatus = statusOrder[nextIndex];

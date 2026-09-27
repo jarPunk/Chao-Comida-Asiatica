@@ -27,7 +27,7 @@
 }
 #view-pedidos .segmented-control b { margin-left: 7px; font-variant-numeric: tabular-nums; }
 #view-pedidos .date-picker { flex-shrink: 0; border-radius: 6px; min-height: 44px; padding: 8px 12px; }
-#view-pedidos .orders-board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: start; }
+#view-pedidos .orders-board { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(250px, .75fr); gap: 24px; align-items: start; }
 #view-pedidos .order-column {
   min-width: 0;
   min-height: 260px;
@@ -120,6 +120,17 @@
 #view-pedidos .check-button { padding: 9px 10px; min-height: 36px; background: var(--ink); color: var(--panel); border-radius: 4px; font-size: 11px; }
 #view-pedidos .check-button:hover { background: var(--coral-dark); transform: none; }
 #view-pedidos .empty-column { margin: 0; padding: 28px 16px; border: 1px dashed var(--line); color: var(--muted); text-align: center; font-size: 13px; border-radius: 6px; }
+/* Listos apilados en tira mini: solo número + nombre, lo demás al detalle. */
+#view-pedidos .board-card.listo-mini { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 8px; margin-bottom: 6px; }
+#view-pedidos .listo-mini .mini-main { display: flex; align-items: baseline; gap: 7px; min-width: 0; flex: 1 1 150px; background: transparent; border: 0; padding: 3px 2px; text-align: left; cursor: pointer; color: var(--ink); }
+#view-pedidos .listo-mini .mini-number { color: var(--coral-dark); font-family: var(--font-display, sans-serif); font-size: 17px; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#view-pedidos .listo-mini .mini-customer { font-size: 12.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#view-pedidos .listo-mini .mini-total { margin-left: auto; font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#view-pedidos .listo-mini .payment-status.mini { min-height: 28px; padding: 3px 7px; font-size: 10px; margin: 0; flex-shrink: 0; }
+#view-pedidos .listo-mini .check-button.mini { min-height: 30px; padding: 5px 9px; font-size: 10.5px; flex-shrink: 0; }
+#view-pedidos .listo-mini .check-button.mini svg { width: 12px; height: 12px; }
+#view-pedidos .listo-mini .btn-action.mini { width: 28px; height: 28px; min-width: 28px; flex-shrink: 0; }
+#view-pedidos .listo-mini .btn-action.mini svg { width: 13px; height: 13px; }
 
 /* A carta with illustration margins and a strong name / price hierarchy. */
 #view-menu .menu-toolbar { padding-top: 20px; border-top: 1px solid var(--line); gap: 14px; }
