@@ -30,6 +30,15 @@ let initialLoadDone = false;
 const defaultPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const mixedPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];
+function isGyozaProduct(product) {
+  const name = String(product?.nombre ?? product ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return /gyoza|giosa|gyosa/.test(name);
+}
+function isPlainFlavorProduct(product) {
+  if (isGyozaProduct(product)) return true;
+  const name = String(product?.nombre ?? product ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  return onlyNormalProducts.some((item) => String(item).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() === name);
+}
 
 function getBoliviaDateValue(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -64,16 +73,17 @@ function getBoliviaDayRange(dateValue = selectedOrdersDate || getBoliviaDateValu
 }
 
 function preparationNames(product) {
+  if (isGyozaProduct(product)) return [];
   const saved = product.producto_variaciones?.map((item) => item.variaciones?.nombre).filter(Boolean) || [];
   if (isMixedDish(product)) return [...new Set([...mixedPreparations, ...saved])].filter((name) => normalizeMenuText(name).trim() !== 'dulce');
   if (saved.length) return saved;
-  return onlyNormalProducts.includes(product.nombre) ? ['Normal'] : defaultPreparations;
+  return isPlainFlavorProduct(product) ? ['Normal'] : defaultPreparations;
 }
 
 function allowedPreparationIds(product) {
   const saved = product.producto_variaciones?.map((item) => item.variacion_id) || [];
   if (saved.length) return saved;
-  const names = onlyNormalProducts.includes(product.nombre) ? ['Normal'] : defaultPreparations;
+  const names = isPlainFlavorProduct(product) ? ['Normal'] : defaultPreparations;
   return variations.filter((variation) => names.includes(variation.nombre)).map((variation) => variation.id);
 }
 
@@ -148,6 +158,7 @@ function isMixedDish(product) {
 
 function servingLabel(product) {
   if (product.tipo === 'BEBIDA' || product.tipo === 'EXTRA' || isChickenExtra(product)) return '';
+  if (isGyozaProduct(product)) return 'Plato llano · 6 piezas';
   if (isMixedDish(product)) return 'Plato llano · Poco caldo';
   return /arroz|chaufa/.test(normalizeMenuText(product.nombre)) ? 'Plato hondo · Sin caldo' : 'Plato hondo · Con caldo';
 }
@@ -160,11 +171,16 @@ function menuIllustration(product) {
     return `<div class="menu-visual beverage-${palette}" style="${drinkColorStyle(product)}" aria-hidden="true"><div class="drink-art"><span class="drink-straw"></span><span class="drink-glass"><span class="drink-liquid"></span><span class="drink-ice ice-one"></span><span class="drink-ice ice-two"></span><span class="drink-ice ice-three"></span></span><span class="drink-garnish"></span></div></div>`;
   }
   const extra = isChickenExtra(product);
+  const gyoza = isGyozaProduct(product);
   const chicken = /chicharron/.test(name);
   const hasShrimp = /\bcamaron(?:es)?\b/.test(name);
   const shrimpMarkup = hasShrimp ? '<span class="shrimp shrimp-one"></span><span class="shrimp shrimp-two"></span><span class="shrimp shrimp-three"></span>' : '';
   const kind = extra ? 'chicken-extra' : /arroz|chaufa/.test(name) ? 'rice' : 'noodles';
   const grains = Array.from({ length: 50 }, (_, i) => `<span class="rice-grain" style="--x:${9 + (i * 23 % 80)}%;--y:${8 + (i * 37 % 81)}%;--r:${i * 47}deg"></span>`).join('');
+  if (gyoza) {
+    const pieces = Array.from({ length: 6 }, (_, i) => `<span class="gyoza-piece gyoza-${i + 1}"></span>`).join('');
+    return `<div class="menu-visual dish-gyoza" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><div class="food-serving">${pieces}</div><span class="gyoza-sauce"></span></div></div></div>`;
+  }
   if (isMixedDish(product)) {
     return `<div class="menu-visual dish-rice dish-mixed" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><span class="mixed-broth"></span><div class="food-serving">${grains}<span class="food-greens"></span>${shrimpMarkup}</div><div class="mixed-chicken crispy-chicken"><span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span></div></div></div></div>`;
   }
@@ -267,6 +283,23 @@ function updateProductTypeFields(form) {
   updateDrinkColorPreview(form);
   sizesField.hidden = isDrink;
   sizesField.style.display = isDrink ? 'none' : 'grid';
+  syncGyozaProductFields(form);
+}
+
+function syncGyozaProductFields(form) {
+  const sizesField = form?.querySelector('[data-sizes-field]');
+  if (!sizesField) return;
+  const isGyoza = isGyozaProduct(form.elements.nombre?.value || '');
+  const hide = form.elements.tipo?.value === 'BEBIDA' || isGyoza;
+  const addSize = sizesField.querySelector('.add-size');
+  const sizesEditor = sizesField.querySelector('.sizes-editor');
+  const prepLabel = sizesField.querySelector('.preparation-label');
+  const prepEditor = sizesField.querySelector('.preparations-editor');
+  if (addSize) addSize.hidden = hide;
+  if (sizesEditor) sizesEditor.hidden = hide;
+  if (prepLabel) prepLabel.hidden = hide;
+  if (prepEditor) prepEditor.hidden = hide;
+  if (isGyoza) sizesField.querySelectorAll('.preparation-option input').forEach((input) => { input.checked = false; });
 }
 
 async function loadProducts() {
@@ -323,6 +356,12 @@ function renderClientPicker() {
   picker.querySelector('.client-results').innerHTML = '<button type="button" data-client-id="">Cliente ocasional</button>' + clients.filter((client) => client.activo).map((client) => `<button type="button" data-client-id="${client.id}"><strong>${client.nombres} ${client.apellidos}</strong><small>${client.telefono || 'Sin celular registrado'}</small></button>`).join('');
 }
 
+function syncClientClear(picker) {
+  const search = picker?.querySelector('[data-client-search]');
+  const clear = picker?.querySelector('[data-client-clear]');
+  if (search && clear) clear.hidden = !search.value;
+}
+
 function setupClientSearch() {
   const form = document.querySelector('#order-form');
   if (!form || form.querySelector('[data-client-picker]')) return;
@@ -330,14 +369,25 @@ function setupClientSearch() {
   const picker = document.createElement('div');
   picker.dataset.clientPicker = 'true';
   picker.className = 'client-picker';
-  picker.innerHTML = '<input type="search" data-client-search placeholder="Buscar nombre o celular" autocomplete="off" /><input type="hidden" name="cliente_id" value="" /><div class="client-results"></div>';
+  picker.innerHTML = '<input type="search" data-client-search placeholder="Buscar nombre o celular" autocomplete="off" /><button type="button" class="client-clear" data-client-clear aria-label="Limpiar búsqueda" hidden>×</button><input type="hidden" name="cliente_id" value="" /><div class="client-results"></div>';
   clientLabel.replaceChildren(document.createTextNode('Cliente'), picker);
   const search = picker.querySelector('[data-client-search]');
+  const clear = picker.querySelector('[data-client-clear]');
   search.addEventListener('focus', () => picker.querySelector('.client-results').classList.add('open'));
   search.addEventListener('input', (event) => {
     const term = event.target.value.trim().toLowerCase();
     picker.querySelector('.client-results').classList.add('open');
     picker.querySelectorAll('.client-results button').forEach((button) => { button.hidden = Boolean(term) && !button.textContent.toLowerCase().includes(term); });
+    syncClientClear(picker);
+  });
+  clear.addEventListener('click', () => {
+    search.value = '';
+    picker.querySelector('[name="cliente_id"]').value = '';
+    picker.querySelectorAll('.client-results button').forEach((button) => { button.hidden = false; });
+    picker.querySelector('.client-results').classList.add('open');
+    search.focus();
+    syncClientClear(picker);
+    updateOrderDetailsSummary();
   });
   picker.querySelector('.client-results').addEventListener('click', (event) => {
     const option = event.target.closest('[data-client-id]');
@@ -345,6 +395,7 @@ function setupClientSearch() {
     picker.querySelector('[name="cliente_id"]').value = option.dataset.clientId;
     search.value = option.dataset.clientId ? option.querySelector('strong').textContent : '';
     picker.querySelector('.client-results').classList.remove('open');
+    syncClientClear(picker);
     updateOrderDetailsSummary();
   });
   if (!picker.querySelector('[data-quick-client]')) picker.insertAdjacentHTML('beforeend', '<button type="button" class="secondary-button quick-client-button" data-quick-client>＋ Nuevo cliente</button>');
@@ -450,13 +501,15 @@ function openProductModal(product = null) {
   sizesField.querySelector('.sizes-editor').innerHTML = sizeRowsMarkup(product?.producto_tamanos || []);
   if (!product) sizesField.querySelector('.add-size').click();
   const isDrink = product?.tipo === 'BEBIDA';
-  sizesField.querySelector('.add-size').hidden = isDrink;
-  sizesField.querySelector('.sizes-editor').hidden = isDrink;
-  sizesField.querySelector('.preparation-label').hidden = isDrink;
-  sizesField.querySelector('.preparations-editor').hidden = isDrink;
+  const isGyoza = isGyozaProduct(product?.nombre || form.elements.nombre.value);
+  const hideSinglePrice = isDrink || isGyoza;
+  sizesField.querySelector('.add-size').hidden = hideSinglePrice;
+  sizesField.querySelector('.sizes-editor').hidden = hideSinglePrice;
+  sizesField.querySelector('.preparation-label').hidden = hideSinglePrice;
+  sizesField.querySelector('.preparations-editor').hidden = hideSinglePrice;
   setupDrinkColorField(form, product);
   updateProductTypeFields(form);
-  const allowed = product ? allowedPreparationIds(product) : variations.filter((variation) => !onlyNormalProducts.includes(form.elements.nombre.value.trim()) || variation.nombre === 'Normal').map((variation) => variation.id);
+  const allowed = isGyoza ? [] : product ? allowedPreparationIds(product) : variations.filter((variation) => !onlyNormalProducts.includes(form.elements.nombre.value.trim()) || variation.nombre === 'Normal').map((variation) => variation.id);
   sizesField.querySelector('.preparations-editor').innerHTML = variations.map((variation) => `<label class="preparation-option"><input type="checkbox" value="${variation.id}" ${allowed.includes(variation.id) ? 'checked' : ''} />${variation.nombre}</label>`).join('');
   if (product && ['Arroz Chaufa', 'Kung Pao'].includes(product.nombre)) {
     sizesField.querySelectorAll('.preparation-option input').forEach((input) => {
@@ -543,8 +596,8 @@ function databaseVariationId(value) {
 }
 
 function preparationOptions(product) {
-  if (quantityOnlyProduct(product)) return [];
-  const names = onlyNormalProducts.some(name => normalizeMenuText(name) === normalizeMenuText(product.nombre)) ? ['Normal'] : defaultPreparations;
+  if (quantityOnlyProduct(product) || isGyozaProduct(product)) return [];
+  const names = isPlainFlavorProduct(product) ? ['Normal'] : defaultPreparations;
   return names.map(nombre => {
     const saved = variations.find(v => normalizeMenuText(v.nombre) === normalizeMenuText(nombre) && /^\d+$/.test(String(v.id)));
     return saved || (nombre === 'Normal' ? { id: '', nombre } : null);
@@ -558,7 +611,7 @@ function addSelectedOrderItem() {
   const sizeSelect = document.querySelector('.order-size');
   const size = quantityOnlyProduct(product) ? null : product.producto_tamanos?.find((item) => String(item.id) === sizeSelect.value);
   const preparationSelect = document.querySelector('.order-preparation');
-  const preparation = onlyNormalProducts.includes(product.nombre)
+  const preparation = isPlainFlavorProduct(product)
     ? preparationOptions(product)[0]
     : variations.find((item) => String(item.id) === preparationSelect.value || item.nombre === preparationSelect.options[preparationSelect.selectedIndex]?.textContent) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
   const quantity = Number(document.querySelector('.order-quantity').value) || 1;
@@ -649,15 +702,21 @@ async function loadAuthenticatedData() {
   await Promise.all([loadOrders(), loadClients()]);
 }
 
+function isDefaultSizeName(name) {
+  return ['normal', 'regular', 'clasico', 'clásico', 'personal', 'base'].includes(String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim());
+}
 function orderItemsMarkup(order) {
-  if (!order.details?.length) return `<span class="order-item-box"><strong>${menuEscape(order.items)}</strong></span>`;
+  if (!order.details?.length) return `<span class="order-item-box"><span class="qty">•</span><span class="order-item-text"><strong>${menuEscape(order.items)}</strong></span></span>`;
   return order.details.map((detail) => {
     const productName = detail.productos?.nombre || 'Producto';
     const product = products.find((item) => item.nombre === productName);
     const size = findOrderSize(product, detail);
+    const sizeName = size?.nombre && !isDefaultSizeName(size.nombre) ? size.nombre : '';
     const variation = detail.variaciones?.nombre && detail.variaciones.nombre !== 'Normal' ? detail.variaciones.nombre : '';
-    const options = [size?.nombre, variation].filter(Boolean).join(' · ');
-    return `<span class="order-item-box"><strong>${menuEscape(detail.cantidad)} × ${menuEscape(productName)}</strong>${options ? `<small>${menuEscape(options)}</small>` : ''}</span>`;
+    const kind = product?.tipo === 'BEBIDA' ? ' is-drink' : ' is-dish';
+    const sizeBadge = sizeName ? `<small class="opt opt-size" title="Tamaño: ${menuEscape(sizeName)}">${menuEscape(sizeName)}</small>` : '';
+    const prepBadge = variation ? `<small class="opt opt-prep" title="Sabor: ${menuEscape(variation)}">${menuEscape(variation)}</small>` : '';
+    return `<span class="order-item-box${kind}"><span class="qty">${menuEscape(detail.cantidad)}×</span><span class="order-item-text"><strong>${menuEscape(productName)}</strong>${sizeBadge}${prepBadge}</span></span>`;
   }).join('');
 }
 
@@ -808,6 +867,7 @@ function openModal() {
     clientPicker.querySelector('[name="cliente_id"]').value = '';
     const search = clientPicker.querySelector('[data-client-search]');
     if (search) search.value = '';
+    syncClientClear(clientPicker);
   }
   form.querySelector('.selected-order-items').innerHTML = '';
   renderOrderCatalog();
@@ -901,6 +961,7 @@ async function openEditOrderModal(databaseId) {
     if (clientSearch) {
       clientSearch.value = clientDisplayName;
     }
+    syncClientClear(clientPicker);
   }
 
   const currentOrder = orderRaw || localOrder;
@@ -1050,6 +1111,7 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('change', (event) => {
   if (event.target.matches('#product-form [name="tipo"]')) updateProductTypeFields(event.target.form);
+  if (event.target.matches('#product-form [name="nombre"]')) syncGyozaProductFields(event.target.form);
   if (event.target.matches('.selected-order-preparation, .selected-order-quantity')) {
     updateEditableOrderItem(event.target.closest('.selected-order-item'));
     return;
@@ -1067,17 +1129,19 @@ document.addEventListener('change', (event) => {
   const preparationControl = document.querySelector('[data-preparation-control]');
   const preparationSelect = document.querySelector('.order-preparation');
   const isDrink = product?.tipo === 'BEBIDA';
-  const isOnlyNormal = product && onlyNormalProducts.includes(product.nombre);
+  const isOnlyNormal = product && isPlainFlavorProduct(product);
   const quantityOnly = !product || quantityOnlyProduct(product);
+  const hasPrepOptions = product && preparationOptions(product).length > 0;
   sizeControl.hidden = quantityOnly;
-  preparationControl.hidden = quantityOnly || isOnlyNormal;
-  preparationSelect.disabled = quantityOnly || isOnlyNormal;
+  preparationControl.hidden = quantityOnly || isOnlyNormal || !hasPrepOptions;
+  preparationSelect.disabled = quantityOnly || isOnlyNormal || !hasPrepOptions;
   sizeSelect.innerHTML = (quantityOnly ? [] : product?.producto_tamanos)?.map((size) => `<option value="${size.id}">${size.nombre} · Bs ${Number(size.precio).toFixed(2)}</option>`).join('') || '<option value="">Sin tamaños</option>';
   sizeSelect.disabled = quantityOnly || !product?.producto_tamanos?.length;
   preparationSelect.innerHTML = (product && !quantityOnly && !isOnlyNormal ? preparationOptions(product) : []).map((variation, index) => `<option value="${variation.id}" ${index === 0 ? 'selected' : ''}>${variation.nombre}</option>`).join('');
 });
 
 document.addEventListener('input', (event) => {
+  if (event.target.matches('#product-form [name="nombre"]')) syncGyozaProductFields(event.target.form);
   const search = event.target.closest('#view-clientes .table-toolbar input');
   if (!search) return;
   const term = search.value.trim().toLowerCase();
@@ -1184,10 +1248,12 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
   const productId = id || response.data?.id;
   if (productId) {
     const isDrink = form.elements.tipo.value === 'BEBIDA';
-    const sizes = isDrink ? [] : readSizeRows().map((size) => ({ producto_id: productId, nombre: size.nombre, precio: size.precio, activo: true, updated_at: new Date().toISOString() }));
-    if (isDrink) {
+    const isGyoza = isGyozaProduct(form.elements.nombre.value);
+    const singlePrice = isDrink || isGyoza;
+    const sizes = singlePrice ? [] : readSizeRows().map((size) => ({ producto_id: productId, nombre: size.nombre, precio: size.precio, activo: true, updated_at: new Date().toISOString() }));
+    if (singlePrice) {
       const sizeDelete = await supabaseClient.from('producto_tamanos').delete().eq('producto_id', productId);
-      if (sizeDelete.error) { showProductError('La bebida se guardó, pero no se pudieron limpiar sus tamaños. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
+      if (sizeDelete.error) { showProductError('Se guardó, pero no se pudieron limpiar sus tamaños. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
     }
     if (sizes.length) {
       const sizeResponse = await supabaseClient.from('producto_tamanos').upsert(sizes, { onConflict: 'producto_id,nombre' });

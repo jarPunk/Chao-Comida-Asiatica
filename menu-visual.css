@@ -68,6 +68,20 @@
 .dish-chicken-extra .piece-five { top: 71%; left: 49%; transform: rotate(21deg); }
 .dish-chicken-extra .piece-six { top: 30%; left: 36%; transform: rotate(-24deg); }
 .dish-mixed { background: #edf0e5; }
+/* Gyoza: six half-moon dumplings on a flat oval plate with a soy dish. */
+.dish-gyoza { background: #f0ece1; }
+.dish-gyoza .food-plate { top: 62px; left: 13px; width: 176px; height: 92px; overflow: visible; }
+.dish-gyoza .food-serving { position: absolute; left: 14px; bottom: 20px; width: 128px; height: 76px; border-radius: 46% 46% 40% 40% / 70% 70% 30% 30%; background: radial-gradient(ellipse at 45% 25%, #f3ecdc, #e2d3ae 70%, #d3bd8d); box-shadow: 0 4px 3px #70543122; }
+.gyoza-piece { position: absolute; width: 36px; height: 23px; border: 1px solid #c99e58; border-bottom-color: #a9762f; border-radius: 50% 50% 10% 10% / 92% 92% 12% 12%; background: linear-gradient(#fffaf0 0%, #fbeecd 52%, #f0cd8d 78%, #dfa958 100%); box-shadow: 0 2px 2px #825c3035, inset 0 2px 2px #ffffffee, inset 0 -3px 4px #b57e2e55; }
+.gyoza-piece::before { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 7px; border-radius: 50% 50% 0 0 / 100% 100% 0 0; background: repeating-linear-gradient(90deg, transparent 0 4px, #d9b981 4px 5.5px); opacity: .9; }
+.gyoza-piece::after { content: ''; position: absolute; left: 6px; top: 4px; width: 8px; height: 4px; border-radius: 50%; background: #ffffffaa; transform: rotate(-18deg); }
+.gyoza-1 { top: 12%; left: 8%; transform: rotate(-12deg); z-index: 1; }
+.gyoza-2 { top: 9%; left: 37%; transform: rotate(4deg); z-index: 2; }
+.gyoza-3 { top: 12%; left: 66%; transform: rotate(13deg); z-index: 1; }
+.gyoza-4 { top: 54%; left: 8%; transform: rotate(9deg); z-index: 3; }
+.gyoza-5 { top: 57%; left: 37%; transform: rotate(-5deg); z-index: 4; }
+.gyoza-6 { top: 54%; left: 66%; transform: rotate(-13deg); z-index: 3; }
+.gyoza-sauce { position: absolute; right: 8px; top: 14px; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #6b4a2e, #3d2716); border: 3px solid #fffefa; box-shadow: 0 2px 3px #44403325; }
 .dish-mixed .food-plate { width: 178px; height: 96px; left: 10px; top: 59px; }
 .dish-mixed .food-serving { width: 91px; height: 85px; left: 11px; bottom: 22px; }
 .mixed-chicken { position: absolute; width: 78px; height: 80px; right: 5px; top: -7px; }

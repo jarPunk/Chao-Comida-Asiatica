@@ -173,11 +173,3 @@ function updateOrderDetailsSummary() {
 document.addEventListener('change', event => {
   if (event.target.closest('#order-form')) updateOrderDetailsSummary();
 });
-document.addEventListener('click', event => {
-  if (event.target.closest('[data-complete-order-details]')) {
-    const details = document.querySelector('.order-details');
-    updateOrderDetailsSummary();
-    details.open = false;
-    details.querySelector('summary').focus();
-  }
-});
