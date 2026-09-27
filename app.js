@@ -81,8 +81,11 @@ function mapOrder(row) {
   const customer = row.clientes ? `${row.clientes.nombres} ${row.clientes.apellidos}` : 'Cliente ocasional';
   const items = (row.detalle_pedido || []).map((detail) => {
     const product = detail.productos?.nombre || 'Producto';
+    const productData = products.find((item) => item.nombre === product);
+    const size = findOrderSize(productData, detail);
+    const sizeLabel = size?.nombre ? ` · ${size.nombre}` : '';
     const variation = detail.variaciones?.nombre && detail.variaciones.nombre !== 'Normal' ? ` ${detail.variaciones.nombre}` : '';
-    return `${detail.cantidad} ${product}${variation}`;
+    return `${detail.cantidad} ${product}${sizeLabel}${variation}`;
   }).join(' · ') || 'Sin productos registrados';
   const status = { PENDIENTE: 'pendiente', EN_PREPARACION: 'preparacion', LISTO: 'listo' }[row.estado] || 'pendiente';
   return {
@@ -100,16 +103,24 @@ function mapOrder(row) {
   };
 }
 
+function findOrderSize(product, detail) {
+  const sizes = product?.producto_tamanos || [];
+  return sizes.find((item) => String(item.id) === String(detail.tamano_id))
+    || sizes.find((item) => Number(item.precio) === Number(detail.precio_unitario));
+}
+
 async function loadOrders() {
   if (!supabaseClient || !isAuthenticated) return;
   selectedOrdersDate = selectedOrdersDate || getBoliviaDateValue();
   const { start, end } = getBoliviaDayRange();
-  const { data, error } = await supabaseClient
+  const orderQuery = (includeSize) => supabaseClient
     .from('pedidos')
-    .select('id, numero_ticket, tipo_pedido, estado, estado_pago, total, notas, created_at, clientes(nombres, apellidos), mesas(numero), detalle_pedido(cantidad, precio_unitario, productos(nombre), variaciones(nombre))')
+    .select(`id, numero_ticket, tipo_pedido, estado, estado_pago, total, notas, created_at, clientes(nombres, apellidos), mesas(numero), detalle_pedido(cantidad, ${includeSize ? 'tamano_id, ' : ''}precio_unitario, productos(nombre), variaciones(nombre))`)
     .gte('created_at', start)
     .lt('created_at', end)
     .order('created_at', { ascending: false });
+  let { data, error } = await orderQuery(true);
+  if (error) ({ data, error } = await orderQuery(false));
   if (error) { showToast('No se pudieron cargar los pedidos'); console.error(error); return; }
   orders = (data || []).map(mapOrder);
   renderHomeOrders();
@@ -634,14 +645,27 @@ async function initAuth() {
 }
 
 async function loadAuthenticatedData() {
-  await Promise.all([loadOrders(), loadProducts(), loadClients()]);
+  await loadProducts();
+  await Promise.all([loadOrders(), loadClients()]);
+}
+
+function orderItemsMarkup(order) {
+  if (!order.details?.length) return `<span class="order-item-box"><strong>${menuEscape(order.items)}</strong></span>`;
+  return order.details.map((detail) => {
+    const productName = detail.productos?.nombre || 'Producto';
+    const product = products.find((item) => item.nombre === productName);
+    const size = findOrderSize(product, detail);
+    const variation = detail.variaciones?.nombre && detail.variaciones.nombre !== 'Normal' ? detail.variaciones.nombre : '';
+    const options = [size?.nombre, variation].filter(Boolean).join(' · ');
+    return `<span class="order-item-box"><strong>${menuEscape(detail.cantidad)} × ${menuEscape(productName)}</strong>${options ? `<small>${menuEscape(options)}</small>` : ''}</span>`;
+  }).join('');
 }
 
 function orderMarkup(order, compact = false) {
   if (compact) {
     return `<article class="order-row" data-order-id="${order.id}">
       <span class="order-number">#${order.id.slice(-3)}</span>
-      <div class="order-customer"><strong>${order.customer}</strong><span>${order.items}</span></div>
+      <div class="order-customer"><strong>${order.customer}</strong><div class="order-items">${orderItemsMarkup(order)}</div></div>
       <span class="order-type"><i data-lucide="${iconForType(order.type)}"></i>${order.type}</span>
       <strong class="order-total">${order.total}</strong>
       <button class="order-status status-${order.status}" data-advance="${order.id}">${order.label}</button>
@@ -652,7 +676,7 @@ function orderMarkup(order, compact = false) {
       </div>
     </article>`;
   }
-  return `<article class="board-card" data-order-id="${order.id}">
+  return `<article class="board-card status-${order.status}" data-order-id="${order.id}">
     <div class="board-card-top">
       <span>#${order.id}</span>
       <div class="card-actions">
@@ -661,7 +685,7 @@ function orderMarkup(order, compact = false) {
         <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
       </div>
     </div>
-    <h4>${order.customer}</h4><p>${order.items}</p><button type="button" class="order-open-button" data-read-order="${order.id}" aria-label="Ver pedido ${order.id} completo">Ver pedido completo</button>
+    <h4>${order.customer}</h4><div class="order-items">${orderItemsMarkup(order)}</div><button type="button" class="order-open-button" data-read-order="${order.id}" aria-label="Ver pedido ${order.id} completo">Ver pedido completo</button>
     <div class="board-card-bottom">
       <strong>${order.total}</strong>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
@@ -896,13 +920,13 @@ async function openEditOrderModal(databaseId) {
     if (orderRaw?.detalle_pedido && orderRaw.detalle_pedido.length) {
       orderRaw.detalle_pedido.forEach((detail) => {
         const product = products.find((p) => String(p.id) === String(detail.producto_id)) || { nombre: 'Producto', tipo: 'PLATO' };
-        const size = quantityOnlyProduct(product) ? null : product.producto_tamanos?.find((item) => String(item.id) === String(detail.tamano_id));
+        const size = quantityOnlyProduct(product) ? null : findOrderSize(product, detail);
         const sizeName = size?.nombre || '';
         const prepName = quantityOnlyProduct(product) ? '' : variations.find((variation) => String(variation.id) === String(detail.variacion_id))?.nombre || '';
         const item = document.createElement('div');
         item.className = 'selected-order-item';
         item.dataset.productId = detail.producto_id;
-        item.dataset.sizeId = quantityOnlyProduct(product) ? '' : detail.tamano_id || '';
+        item.dataset.sizeId = quantityOnlyProduct(product) ? '' : size?.id || detail.tamano_id || '';
         item.dataset.variationId = quantityOnlyProduct(product) ? '' : detail.variacion_id || '';
         item.dataset.quantity = detail.cantidad;
         item.dataset.price = detail.precio_unitario;
