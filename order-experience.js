@@ -50,12 +50,18 @@ document.addEventListener('click', event => {
   if (button) showOrderReading(button.dataset.readOrder);
 });
 
+function orderCardKind(p) {
+  if (p.tipo === 'BEBIDA') return 'drink';
+  if (p.tipo === 'EXTRA' || isChickenExtra(p)) return 'extra';
+  return 'dish';
+}
+
 function renderOrderCatalog() {
   const grid = document.querySelector('.order-catalog-grid');
   if (!grid) return;
   const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'todos';
   const list = products.filter(p => p.activo && !p.menuOnly && (category === 'todos' || (category === 'extras' ? isChickenExtra(p) || p.tipo === 'EXTRA' : category === 'bebidas' ? p.tipo === 'BEBIDA' : p.tipo === 'PLATO' && !isChickenExtra(p))));
-  grid.innerHTML = list.map(p => `<button type="button" class="order-product-card" data-order-card="${menuEscape(p.id)}" aria-label="Añadir ${menuEscape(p.nombre)}">${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <span aria-hidden="true">＋</span></span></button>`).join('') || '<p class="catalog-empty">No hay productos disponibles en esta categoría.</p>';
+  grid.innerHTML = list.map(p => `<button type="button" class="order-product-card" data-kind="${orderCardKind(p)}" data-order-card="${menuEscape(p.id)}" aria-label="Añadir ${menuEscape(p.nombre)}">${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <span aria-hidden="true">＋</span></span></button>`).join('') || '<p class="catalog-empty">No hay productos disponibles en esta categoría.</p>';
 }
 
 function setupOrderCatalog(field) {
@@ -79,7 +85,11 @@ function enhanceOrderItem(item) {
   const selectedPreparation = choices.find(p => String(p.id) === item.dataset.variationId) || (!item.dataset.variationId ? choices[0] : null);
   const sizeOptions = sizes.length ? `<fieldset class="order-option-group"><legend>Tamaño</legend><div class="order-option-buttons">${sizes.map(s => `<label class="order-option-button"><input class="order-option-input selected-order-size" type="radio" name="order-size-${group}" value="${menuEscape(s.id)}" data-size-price="${Number(s.precio)}" ${String(s.id) === String(selectedSize?.id) ? 'checked' : ''}><span class="order-option-label"><span class="order-option-text">${menuEscape(s.nombre)}<span class="order-option-price">Bs ${Number(s.precio).toFixed(2)}</span></span></span></label>`).join('')}</div></fieldset>` : '';
   const preparationOptionsMarkup = choices.length > 1 ? `<fieldset class="order-option-group"><legend>Preparación</legend><div class="order-option-buttons">${choices.map(p => `<label class="order-option-button"><input class="order-option-input selected-order-preparation" type="radio" name="order-preparation-${group}" value="${menuEscape(p.id)}" data-preparation-name="${menuEscape(p.nombre)}" ${p === selectedPreparation ? 'checked' : ''}><span class="order-option-label"><span class="order-option-text">${menuEscape(p.nombre)}</span></span></label>`).join('')}</div></fieldset>` : '';
-  item.innerHTML = `<span class="selected-order-label"></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizeOptions}${preparationOptionsMarkup}</div><button type="button" class="remove-order-item" aria-label="Quitar ${menuEscape(product.nombre)}">×</button>`;
+  const kind = orderCardKind(product);
+  const kindLabel = kind === 'drink' ? 'Bebida' : kind === 'extra' ? 'Extra' : 'Plato';
+  item.classList.remove('is-drink', 'is-dish', 'is-extra');
+  item.classList.add(`is-${kind}`);
+  item.innerHTML = `<span class="selected-order-label"><span class="line-name"></span><span class="line-kind">${kindLabel}</span></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizeOptions}${preparationOptionsMarkup}</div><span class="line-total"></span><button type="button" class="remove-order-item" aria-label="Quitar ${menuEscape(product.nombre)}">×</button>`;
   updateEditableOrderItem(item);
 }
 

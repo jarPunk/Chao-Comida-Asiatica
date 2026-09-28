@@ -212,9 +212,13 @@
 #order-modal .order-category-filters button { border-radius: 4px; padding: 8px 13px; border-color: transparent; background: transparent; font-size: 12px; }
 #order-modal .order-category-filters button.active { color: var(--panel); background: var(--ink); border-color: var(--ink); }
 #order-modal .order-catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: start; }
-#order-modal .order-product-card { border-radius: 6px; gap: 8px; background: var(--panel); border-color: var(--line); min-width: 0; padding-bottom: 12px; }
+#order-modal .order-product-card { position: relative; border-radius: 6px; gap: 8px; background: var(--panel); border-color: var(--line); min-width: 0; padding-bottom: 12px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
 #order-modal .order-product-card:hover { border-color: var(--coral); box-shadow: 0 2px 0 var(--coral-soft); }
-#order-modal .order-product-card:active { background: var(--coral-soft); }
+#order-modal .order-product-card:active { background: var(--coral-soft); transform: scale(.94); border-color: var(--coral); }
+#order-modal .order-product-card::after { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; pointer-events: none; }
+#order-modal .order-product-card[data-kind="dish"]::after { content: 'Plato'; background: var(--coral-soft); color: var(--coral-dark); border-color: #e9c2b5; }
+#order-modal .order-product-card[data-kind="drink"]::after { content: 'Bebida'; background: var(--info-surface); color: var(--info-ink); border-color: var(--info-line); }
+#order-modal .order-product-card[data-kind="extra"]::after { content: 'Extra'; background: var(--gold-soft); color: var(--gold-dark); border-color: var(--line-gold); }
 #order-modal .order-product-card .menu-visual { height: 95px; border-bottom: 1px solid var(--line); }
 #order-modal .order-product-card .food-art { transform: translate(-50%, -50%) scale(.5); }
 #order-modal .order-product-card .drink-art { transform: translate(-50%, -50%) scale(.5); }
@@ -226,7 +230,23 @@
 #order-modal .selected-order-items { gap: 12px; margin-top: 0; align-content: start; }
 #order-modal .selected-order-items:empty { min-height: 58px; }
 #order-modal .selected-order-items:empty::before { content: 'Toca un plato para empezar tu pedido.'; display: block; padding: 18px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-#order-modal .selected-order-item:has(.selected-order-quantity) { grid-template-columns: minmax(0, 1fr) auto 44px; padding: 14px; border-radius: 6px; border-color: var(--line); background: var(--panel); gap: 10px 6px; }
+#order-modal .selected-order-item:has(.selected-order-quantity) { grid-template-columns: minmax(0, 1fr) auto auto; padding: 14px; border-radius: 6px; border-color: var(--line); background: var(--panel); gap: 10px 6px; }
+#order-modal .selected-order-item.is-dish { border-left: 3px solid var(--coral); }
+#order-modal .selected-order-item.is-drink { border-left: 3px solid var(--info-ink); }
+#order-modal .selected-order-item.is-extra { border-left: 3px solid var(--gold); }
+@keyframes comandaPop { 0% { background: var(--coral-soft); transform: translateY(-5px) scale(.99); } 100% { background: var(--panel); transform: none; } }
+#order-modal .selected-order-item.just-added { animation: comandaPop .6s ease; }
+#order-modal .selected-order-label { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+#order-modal .line-kind { font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+#order-modal .is-dish .line-kind { background: var(--coral-soft); color: var(--coral-dark); border-color: #e9c2b5; }
+#order-modal .is-drink .line-kind { background: var(--info-surface); color: var(--info-ink); border-color: var(--info-line); }
+#order-modal .is-extra .line-kind { background: var(--gold-soft); color: var(--gold-dark); border-color: var(--line-gold); }
+#order-modal .line-total { grid-column: 3; grid-row: 2; align-self: center; justify-self: end; font-size: 12px; font-weight: 800; color: var(--coral-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#order-modal .selected-order-item > .remove-order-item { justify-self: end; }
+@media (prefers-reduced-motion: reduce) {
+  #order-modal .order-product-card:active { transform: none; }
+  #order-modal .selected-order-item.just-added { animation: none; }
+}
 #order-modal .selected-order-item .selected-order-label { grid-column: 1 / 3; font-size: 14px; font-weight: 700; line-height: 1.5; }
 #order-modal .selected-order-item .quantity-stepper { grid-column: 1 / 3; grid-row: 2; }
 #order-modal .quantity-stepper button { border-radius: 4px; width: 44px; height: 44px; background: var(--paper); border-color: var(--line); }

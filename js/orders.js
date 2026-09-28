@@ -119,6 +119,9 @@ function addSelectedOrderItem() {
   item.innerHTML = `<span>${quantity} × ${product.nombre}${size && !quantityOnlyProduct(product) ? ` · ${size.nombre}` : ''}${preparation && !quantityOnlyProduct(product) ? ` · ${preparation.nombre}` : ''}</span><button type="button" class="remove-order-item" aria-label="Quitar producto"><i data-lucide="x"></i></button>`;
   document.querySelector('.selected-order-items').appendChild(item);
   enhanceOrderItem(item);
+  item.classList.add('just-added');
+  window.setTimeout(() => item.classList.remove('just-added'), 650);
+  item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   document.querySelector('.order-quantity').value = '1';
   productSelect.value = '';
   sizeSelect.innerHTML = '<option>Tamaño</option>';
@@ -148,7 +151,10 @@ function updateEditableOrderItem(item) {
   if (preparation) item.dataset.variationId = preparation.value || '';
   const size = product.producto_tamanos?.find((entry) => String(entry.id) === String(item.dataset.sizeId));
   const variation = preparation?.dataset.preparationName || '';
-  item.querySelector('.selected-order-label').textContent = `${item.dataset.quantity} × ${product.nombre}${size ? ` · ${size.nombre}` : ''}${variation && variation !== 'Normal' ? ` · ${variation}` : ''}`;
+  const nameEl = item.querySelector('.line-name') || item.querySelector('.selected-order-label');
+  if (nameEl) nameEl.textContent = `${item.dataset.quantity} × ${product.nombre}${size ? ` · ${size.nombre}` : ''}${variation && variation !== 'Normal' ? ` · ${variation}` : ''}`;
+  const totalEl = item.querySelector('.line-total');
+  if (totalEl) totalEl.textContent = `Bs ${(Number(item.dataset.quantity) * Number(item.dataset.price || 0)).toFixed(2)}`;
   updateOrderTotal();
 }
 
