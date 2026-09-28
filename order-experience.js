@@ -5,6 +5,14 @@ function setupOrderTypeSelection() {
   fieldset.className = 'order-type-selection';
   fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option"><input type="radio" name="tipo_pedido" value="Para llevar" checked><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option"><input type="radio" name="tipo_pedido" value="En mesa"><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
   select.closest('label').replaceWith(fieldset);
+  const form = document.querySelector('#order-form');
+  const details = form.querySelector('.order-details');
+  const paid = form.querySelector('.payment-check');
+  if (!details || !paid || form.querySelector('.order-sticky-bar')) return;
+  const bar = document.createElement('div');
+  bar.className = 'order-sticky-bar';
+  details.before(bar);
+  bar.append(fieldset, paid);
 }
 
 setupOrderTypeSelection();

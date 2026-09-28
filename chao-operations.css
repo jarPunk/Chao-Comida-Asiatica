@@ -100,6 +100,8 @@
 #view-pedidos .order-item-box .opt-size::before { content: '◧ '; font-weight: 400; }
 #view-pedidos .order-item-box .opt-prep { background: var(--coral-soft); color: var(--coral-dark); border-color: #e9c2b5; }
 #view-pedidos .order-item-box .opt-prep::before { content: '🌶 '; font-size: 9px; }
+#view-pedidos .order-item-box .opt-agridulce { background: #fdf6e3; color: #8a6d1c; border-color: #e6d194; }
+#view-pedidos .order-item-box .opt-agridulce::before { content: '⬢ '; font-size: 9px; }
 #view-inicio .order-customer .order-items { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
 #view-inicio .order-item-box { display: flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--line); border-left: 2px solid var(--coral); border-radius: 4px; background: var(--paper); overflow-wrap: anywhere; min-width: 0; }
 #view-inicio .order-item-box.is-drink { border-left-color: var(--info-ink); }
@@ -194,6 +196,9 @@
 #order-modal .order-details-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; }
 #order-modal .order-details-content > label:first-child { grid-column: 1 / -1; }
 #order-modal .order-type-selection { grid-column: 1 / 2; min-width: 0; margin: 0; padding: 0; border: 0; }
+#order-modal .order-sticky-bar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 8px; align-items: stretch; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; box-shadow: 0 6px 14px -10px #20262255; }
+#order-modal .order-sticky-bar .order-type-selection { grid-column: auto; }
+#order-modal .order-sticky-bar .payment-check { margin: 0; justify-content: center; }
 #order-modal .order-type-selection legend { margin-bottom: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
 #order-modal .order-type-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 #order-modal .order-type-option { display: flex; align-items: center; min-width: 0; min-height: 58px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); cursor: pointer; }
@@ -307,6 +312,7 @@
 @media (max-width: 640px) {
   #order-modal .order-details-content { grid-template-columns: minmax(0, 1fr); }
   #order-modal .order-type-selection { grid-column: 1 / -1; }
+  #order-modal .order-sticky-bar { grid-template-columns: minmax(0, 1fr); }
   #order-modal .order-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #order-modal .order-card-name, #order-modal .order-card-price { font-size: 12px; }
   #order-modal .order-category-filters { gap: 2px; }
