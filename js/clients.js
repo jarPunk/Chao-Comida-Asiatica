@@ -42,7 +42,8 @@ function syncClientClear(picker) {
 function setupClientSearch() {
   const form = document.querySelector('#order-form');
   if (!form || form.querySelector('[data-client-picker]')) return;
-  const clientLabel = form.querySelector('label');
+  const clientLabel = form.querySelector('[data-client-label]') || form.querySelector('.order-details label');
+  if (!clientLabel) return;
   const picker = document.createElement('div');
   picker.dataset.clientPicker = 'true';
   picker.className = 'client-picker';
