@@ -6,7 +6,7 @@ function setAuthUI(authenticated) {
 }
 
 async function initAuth() {
-  if (!supabaseClient) { setAuthUI(true); return; }
+  if (!supabaseClient) { setAuthUI(true); restoreSavedView(); return; }
   const { data } = await supabaseClient.auth.getSession();
   isAuthenticated = Boolean(data.session);
   setAuthUI(isAuthenticated);
@@ -29,6 +29,7 @@ async function initAuth() {
 async function loadAuthenticatedData() {
   await loadProducts();
   await Promise.all([loadOrders(), loadClients()]);
+  restoreSavedView();
 }
 
 
@@ -48,5 +49,6 @@ renderClients();
 renderProducts();
 updateMetric();
 refreshIcons();
+restoreSavedView();
 initAuth();
 

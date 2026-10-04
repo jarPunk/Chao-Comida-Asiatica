@@ -41,11 +41,26 @@ function updateMetric() {
 }
 
 function switchView(view) {
+  const validViews = ['inicio', 'pedidos', 'clientes', 'menu', 'estadisticas'];
+  if (!validViews.includes(view)) view = 'inicio';
+  document.documentElement.removeAttribute('data-initial-view');
+  try { localStorage.setItem('chao.current-view', view); } catch { /* Keep the view in memory if storage is unavailable. */ }
+  history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${view}`);
   document.querySelectorAll('.page-view').forEach((page) => page.classList.toggle('active', page.id === `view-${view}`));
   document.querySelectorAll('.nav-item[data-view]').forEach((item) => item.classList.toggle('active', item.dataset.view === view));
   const viewLabel = document.querySelector('#current-view-label');
   if (viewLabel) viewLabel.textContent = { inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', menu: 'Menú', estadisticas: 'Estadísticas' }[view] || 'Inicio';
   if (view === 'pedidos') renderBoard();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restoreSavedView() {
+  const validViews = ['inicio', 'pedidos', 'clientes', 'menu', 'estadisticas'];
+  let savedView = window.location.hash.slice(1);
+  if (!validViews.includes(savedView)) {
+    savedView = 'inicio';
+    try { savedView = localStorage.getItem('chao.current-view') || savedView; } catch { /* Use Inicio when storage is unavailable. */ }
+  }
+  switchView(savedView);
 }
 
