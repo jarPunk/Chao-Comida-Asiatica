@@ -21,6 +21,7 @@ async function initAuth() {
       initialLoadDone = true;
       await loadAuthenticatedData();
     } else if (event === 'SIGNED_OUT') {
+      stopOrdersRealtime();
       initialLoadDone = false;
     }
   });
@@ -29,6 +30,7 @@ async function initAuth() {
 async function loadAuthenticatedData() {
   await loadProducts();
   await Promise.all([loadOrders(), loadClients()]);
+  startOrdersRealtime();
   restoreSavedView();
 }
 

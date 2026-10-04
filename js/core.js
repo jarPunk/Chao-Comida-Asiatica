@@ -27,6 +27,8 @@ const mixedDish = {
 };
 let selectedOrdersDate = '';
 let initialLoadDone = false;
+let ordersRealtimeChannel = null;
+let ordersReloadTimer = null;
 const defaultPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const mixedPreparations = ['Normal', 'Semi picante', 'Picante', 'Súper picante', 'Agridulce'];
 const onlyNormalProducts = ['Arroz Chaufa', 'Kung Pao'];

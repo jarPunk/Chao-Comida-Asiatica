@@ -50,6 +50,30 @@ async function loadOrders() {
   updateMetric();
 }
 
+function scheduleOrdersReload() {
+  window.clearTimeout(ordersReloadTimer);
+  ordersReloadTimer = window.setTimeout(() => loadOrders(), 250);
+}
+
+function stopOrdersRealtime() {
+  if (ordersRealtimeChannel && supabaseClient) supabaseClient.removeChannel(ordersRealtimeChannel);
+  ordersRealtimeChannel = null;
+  window.clearTimeout(ordersReloadTimer);
+  ordersReloadTimer = null;
+}
+
+function startOrdersRealtime() {
+  if (!supabaseClient || !isAuthenticated) return;
+  stopOrdersRealtime();
+  ordersRealtimeChannel = supabaseClient
+    .channel('orders-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, scheduleOrdersReload)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'detalle_pedido' }, scheduleOrdersReload)
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR') console.error('No se pudo conectar la actualización en tiempo real de pedidos.');
+    });
+}
+
 
 function showOrderError(message) {
   const errorElement = document.querySelector('.order-form-error');
