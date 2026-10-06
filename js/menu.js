@@ -22,6 +22,16 @@ function servingLabel(product) {
   return /arroz|chaufa/.test(normalizeMenuText(product.nombre)) ? 'Plato hondo · Sin caldo' : 'Plato hondo · Con caldo';
 }
 
+function noodleDishProfile(name) {
+  if (/ramen/.test(name)) return 'ramen';
+  if (/tallarin.*salt(e?ad)o?|salt(e?ad)o?.*tallarin/.test(name)) return 'tallarin-saltado';
+  if (/tallarin.*camaron|camaron.*tallarin/.test(name)) return 'tallarin-camaron';
+  if (/kung\s*pao/.test(name)) return 'kung-pao';
+  if (/chicharron/.test(name)) return 'chicharrones';
+  if (/yakisoba/.test(name)) return 'yakisoba';
+  return 'noodle-default';
+}
+
 // Decorative illustrations use only markup and CSS; no media is stored or requested.
 function menuIllustration(product) {
   const name = String(product.nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -36,6 +46,8 @@ function menuIllustration(product) {
   const shrimpMarkup = hasShrimp ? '<span class="shrimp shrimp-one"></span><span class="shrimp shrimp-two"></span><span class="shrimp shrimp-three"></span>' : '';
   const kind = extra ? 'chicken-extra' : /arroz|chaufa/.test(name) ? 'rice' : 'noodles';
   const grains = Array.from({ length: 50 }, (_, i) => `<span class="rice-grain" style="--x:${9 + (i * 23 % 80)}%;--y:${8 + (i * 37 % 81)}%;--r:${i * 47}deg"></span>`).join('');
+  const fineVegetables = '<span class="fine-vegetable fine-onion"></span><span class="fine-vegetable fine-carrot"></span><span class="fine-vegetable fine-cabbage"></span><span class="fine-vegetable fine-pepper"></span>';
+  const chaufaChicken = /chaufa/.test(name) ? '<span class="chaufa-chicken chaufa-chicken-one"></span><span class="chaufa-chicken chaufa-chicken-two"></span><span class="chaufa-chicken chaufa-chicken-three"></span><span class="chaufa-chicken chaufa-chicken-four"></span><span class="chaufa-chicken chaufa-chicken-five"></span><span class="chaufa-chicken chaufa-chicken-six"></span><span class="chaufa-chicken chaufa-chicken-seven"></span>' : '';
   if (gyoza) {
     const pieces = Array.from({ length: 6 }, (_, i) => `<span class="gyoza-piece gyoza-${i + 1}"></span>`).join('');
     return `<div class="menu-visual dish-gyoza" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><div class="food-serving">${pieces}</div><span class="gyoza-sauce"></span></div></div></div>`;
@@ -44,7 +56,19 @@ function menuIllustration(product) {
     return `<div class="menu-visual dish-rice dish-mixed" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><span class="mixed-broth"></span><div class="food-serving">${grains}<span class="food-greens"></span>${shrimpMarkup}</div><div class="mixed-chicken crispy-chicken"><span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span></div></div></div></div>`;
   }
   const noodles = Array.from({ length: 13 }, (_, i) => `<span class="noodle-strand" style="--x:${5 + (i * 19 % 46)}%;--y:${8 + (i * 29 % 60)}%;--r:${(i * 37 % 120) - 60}deg"></span>`).join('');
-  return `<div class="menu-visual dish-${kind}${!extra ? ' deep-dish' : ''}${chicken ? ' crispy-chicken' : ''}${/yakisoba/.test(name) ? ' yakisoba' : ''}" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><div class="food-serving">${kind === 'rice' ? grains : ''}${kind === 'noodles' ? `<span class="noodle-nest">${noodles}</span>` : ''}${hasShrimp ? shrimpMarkup : '<span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span>'}${extra ? '<span class="food-piece piece-five"></span><span class="food-piece piece-six"></span>' : '<span class="food-greens"></span>'}</div></div></div></div>`;
+  const profile = extra ? 'chicken-extra' : kind === 'noodles' ? noodleDishProfile(name) : 'noodle-default';
+  const profileMarkup = {
+    'chicken-extra': '<span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span><span class="food-piece piece-five"></span><span class="food-piece piece-six"></span>',
+    'kung-pao': '<span class="noodle-nest">' + noodles + '</span><span class="square-vegetable kung-vegetable kung-veg-one"></span><span class="square-vegetable kung-vegetable kung-veg-two"></span><span class="square-vegetable kung-vegetable kung-veg-three"></span><span class="square-vegetable kung-vegetable kung-veg-four"></span><span class="square-vegetable kung-vegetable kung-veg-five"></span><span class="square-vegetable kung-vegetable kung-veg-six"></span><span class="kung-chicken kung-chicken-one"></span><span class="kung-chicken kung-chicken-two"></span><span class="kung-chicken kung-chicken-three"></span><span class="kung-chicken kung-chicken-four"></span><span class="kung-chicken kung-chicken-five"></span><span class="kung-chicken kung-chicken-six"></span><span class="basil basil-one"></span><span class="basil basil-two"></span><span class="basil basil-three"></span>',
+    ramen: '<span class="dish-broth"></span><span class="noodle-nest">' + noodles + '</span><span class="ramen-egg"></span><span class="ramen-chard"></span><span class="ramen-pork pork-one"></span><span class="ramen-pork pork-two"></span><span class="ramen-pork pork-three"></span>',
+      'tallarin-saltado': '<span class="dish-broth"></span><span class="noodle-nest noodle-nest-full">' + noodles + noodles + '</span><span class="long-vegetable vegetable-one"></span><span class="long-vegetable vegetable-two"></span><span class="long-vegetable vegetable-three"></span><span class="long-vegetable vegetable-four"></span><span class="long-vegetable vegetable-five"></span><span class="long-vegetable vegetable-six"></span><span class="long-vegetable vegetable-seven"></span><span class="saltado-vegetable saltado-onion onion-one"></span><span class="saltado-vegetable saltado-onion onion-two"></span><span class="saltado-vegetable saltado-pepper pepper-one"></span><span class="saltado-vegetable saltado-pepper pepper-two"></span><span class="saltado-vegetable saltado-cabbage cabbage-one"></span><span class="saltado-vegetable saltado-cabbage cabbage-two"></span><span class="saltado-vegetable saltado-carrot carrot-one"></span><span class="saltado-vegetable saltado-carrot carrot-two"></span><span class="long-chicken chicken-one"></span><span class="long-chicken chicken-two"></span><span class="long-chicken chicken-three"></span><span class="long-chicken chicken-four"></span><span class="long-chicken chicken-five"></span><span class="long-chicken chicken-six"></span><span class="long-chicken chicken-seven"></span><span class="long-chicken chicken-eight"></span>' + shrimpMarkup,
+      'tallarin-camaron': '<span class="dish-broth"></span><span class="noodle-nest noodle-nest-full">' + noodles + noodles + '</span><span class="long-vegetable vegetable-one"></span><span class="long-vegetable vegetable-two"></span><span class="long-vegetable vegetable-three"></span><span class="long-vegetable vegetable-four"></span><span class="long-vegetable vegetable-five"></span><span class="long-vegetable vegetable-six"></span>' + shrimpMarkup + '<span class="saltado-vegetable saltado-onion onion-one"></span><span class="saltado-vegetable saltado-pepper pepper-one"></span><span class="saltado-vegetable saltado-cabbage cabbage-one"></span><span class="saltado-vegetable saltado-carrot carrot-one"></span>',
+    chicharrones: '<span class="dish-broth"></span><span class="noodle-nest">' + noodles + '</span><span class="square-vegetable square-one"></span><span class="square-vegetable square-two"></span><span class="square-vegetable square-three"></span><span class="square-vegetable square-four"></span><span class="square-vegetable square-five"></span><span class="square-vegetable square-six"></span><span class="square-vegetable square-seven"></span><span class="square-vegetable square-eight"></span><span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span><span class="food-piece piece-five"></span><span class="food-piece piece-six"></span>',
+    yakisoba: '<span class="noodle-nest noodle-nest-abundant">' + noodles + noodles + '</span><span class="yakisoba-vegetable yakisoba-cabbage cabbage-one"></span><span class="yakisoba-vegetable yakisoba-cabbage cabbage-two"></span><span class="yakisoba-vegetable yakisoba-cabbage cabbage-three"></span><span class="yakisoba-vegetable yakisoba-carrot carrot-one"></span><span class="yakisoba-vegetable yakisoba-carrot carrot-two"></span><span class="yakisoba-vegetable yakisoba-onion onion-one"></span><span class="yakisoba-vegetable yakisoba-onion onion-two"></span><span class="yakisoba-vegetable yakisoba-pepper pepper-one"></span><span class="yakisoba-vegetable yakisoba-pepper pepper-two"></span><span class="small-chicken small-one"></span><span class="small-chicken small-two"></span><span class="small-chicken small-three"></span><span class="small-chicken small-four"></span>',
+    'noodle-default': `<span class="noodle-nest">${noodles}</span><span class="square-vegetable square-one"></span><span class="square-vegetable square-two"></span><span class="square-vegetable square-three"></span><span class="square-vegetable square-four"></span>${extra ? '<span class="food-piece piece-one"></span><span class="food-piece piece-two"></span><span class="food-piece piece-three"></span><span class="food-piece piece-four"></span>' : ''}`
+  }[profile];
+  const profileMarkupWithShrimp = profileMarkup + (profile === 'tallarin-camaron' || profile === 'tallarin-saltado' ? '' : shrimpMarkup);
+  return `<div class="menu-visual dish-${kind}${!extra ? ' deep-dish' : ''}${chicken ? ' crispy-chicken' : ''} dish-profile-${profile}" aria-hidden="true"><div class="food-art"><span class="chopstick chopstick-one"></span><span class="chopstick chopstick-two"></span><div class="food-plate"><div class="food-serving">${kind === 'rice' ? grains + fineVegetables + chaufaChicken + shrimpMarkup : profileMarkupWithShrimp}</div></div></div></div>`;
 }
 
 function productMarkup(product) {
@@ -95,23 +119,16 @@ function toggleCustomerMenu(force) {
 }
 
 const customerFolders = [
-  { key: 'arroces', label: 'Arroces' },
-  { key: 'tallarines', label: 'Tallarines' },
-  { key: 'pollos', label: 'Pollos' },
-  { key: 'extras', label: 'Gyozas y extras' },
+  { key: 'platos', label: 'Platos' },
+  { key: 'extras', label: 'Extras' },
   { key: 'bebidas', label: 'Bebidas' },
-  { key: 'otros', label: 'Otros' },
 ];
 
 function customerFolderOf(product) {
   const name = normalizeMenuText(product.nombre || '');
   if (product.tipo === 'BEBIDA') return 'bebidas';
-  if (/gyoza|giosa|gyosa/.test(name)) return 'extras';
   if (product.tipo === 'EXTRA' || isChickenExtra(product)) return 'extras';
-  if (/arroz|chaufa/.test(name)) return 'arroces';
-  if (/tallarin|yakisoba|fideo/.test(name)) return 'tallarines';
-  if (/pollo|chicharron|kung|mixto/.test(name)) return 'pollos';
-  return 'otros';
+  return 'platos';
 }
 
 function menuTabButton(folder, label, count) {

@@ -56,6 +56,14 @@
 .dish-rice .food-serving { position: absolute; bottom: 21px; width: 120px; height: 97px; border-radius: 52% 52% 35% 35% / 77% 77% 23% 23%; background: radial-gradient(ellipse at 43% 22%, #edd5a1, #d4b579 69%, #bea16a); box-shadow: 0 5px 3px #70543123; }
 .dish-rice .food-piece { width: 9px; height: 7px; }
 .dish-rice .food-greens { width: 5px; height: 9px; box-shadow: -18px 24px 0 #68894e, 24px 25px 0 #809953, 4px 42px 0 #5b7842; }
+.chaufa-chicken { position: absolute; z-index: 4; width: 34px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #d29150, #985431); box-shadow: inset 0 1px #f0b873, 1px 2px 2px #6b3b2455; }
+.chaufa-chicken-one { left: 12%; top: 23%; transform: rotate(18deg); }
+.chaufa-chicken-two { left: 39%; top: 17%; transform: rotate(-28deg); }
+.chaufa-chicken-three { left: 65%; top: 27%; transform: rotate(12deg); }
+.chaufa-chicken-four { left: 25%; top: 46%; transform: rotate(-35deg); }
+.chaufa-chicken-five { left: 53%; top: 49%; transform: rotate(23deg); }
+.chaufa-chicken-six { left: 15%; top: 68%; transform: rotate(-12deg); }
+.chaufa-chicken-seven { left: 60%; top: 69%; transform: rotate(-24deg); }
 .crispy-chicken .food-piece { width: 28px; height: 23px; border: 2px solid #b97930; border-radius: 35% 45% 32% 40%; background: radial-gradient(circle, #f7d68c 1px, transparent 1.8px) 0 0 / 6px 7px, radial-gradient(circle, #b77b33 1px, transparent 1.8px) 3px 2px / 7px 6px, #dea74c; box-shadow: 1px 2px 2px #825c3030, inset 1px 1px 0 #f8d382; }
 .crispy-chicken .piece-three { transform: rotate(-17deg); }
 .crispy-chicken .piece-four { transform: rotate(32deg); }
@@ -101,6 +109,125 @@
 .deep-dish.dish-rice .food-plate { top: 64px; height: 83px; }
 .deep-dish.dish-rice .food-serving { bottom: 16px; }
 .mixed-broth { position: absolute; right: 13px; top: 19px; width: 78px; height: 58px; border-radius: 50%; background: #cea060; box-shadow: inset 0 0 0 3px #dfba8099; }
+.dish-broth { position: absolute; inset: 9px; border-radius: 50%; background: radial-gradient(ellipse at 42% 30%, #d9a85f, #a86335 78%); box-shadow: inset 0 3px 5px #78432155; opacity: .96; }
+.dish-broth ~ .noodle-nest { z-index: 1; }
+.dish-profile-ramen .food-serving { background: #b8753f; }
+.ramen-egg { position: absolute; z-index: 3; right: 13%; top: 18%; width: 27px; height: 35px; border-radius: 50% 48% 45% 52%; background: radial-gradient(circle at 50% 48%, #e9a83e 0 22%, #fff4c8 24% 73%, #d8ba75 75%); transform: rotate(24deg); }
+.ramen-chard { position: absolute; z-index: 3; left: 15%; bottom: 16%; width: 12px; height: 38px; border-radius: 55% 30% 45% 28%; background: linear-gradient(90deg, #476b43 0 36%, #9ab275 38% 58%, #52784a 60%); transform: rotate(-24deg); box-shadow: 20px -9px 0 -2px #66894f; }
+.ramen-pork { position: absolute; z-index: 3; width: 28px; height: 15px; border-radius: 4px; background: linear-gradient(#d99a65, #9c5736); box-shadow: inset 0 2px 0 #f2c28d; }
+.ramen-pork.pork-one { left: 27%; top: 16%; transform: rotate(-15deg); }
+.ramen-pork.pork-two { left: 43%; top: 27%; transform: rotate(9deg); }
+.ramen-pork.pork-three { left: 31%; top: 42%; transform: rotate(19deg); }
+.dish-profile-tallarin-saltado .food-serving, .dish-profile-chicharrones .food-serving { background: #9f673d; }
+.long-vegetable, .long-chicken, .square-vegetable, .small-chicken { position: absolute; z-index: 3; }
+.long-vegetable { width: 8px; height: 49px; border-radius: 5px; background: #64874d; box-shadow: 4px 0 #a8b85b; }
+.vegetable-one { left: 13%; top: 18%; transform: rotate(27deg); }
+.vegetable-two { left: 64%; top: 22%; transform: rotate(72deg); }
+.vegetable-three { left: 55%; top: 55%; transform: rotate(-18deg); }
+.dish-profile-tallarin-saltado .long-vegetable { width: 6px; height: 40px; border-radius: 4px; }
+.vegetable-four { left: 34%; top: 8%; transform: rotate(-38deg); }
+.vegetable-five { left: 76%; top: 47%; transform: rotate(48deg); }
+.vegetable-six { left: 10%; top: 55%; transform: rotate(-52deg); }
+.long-chicken { width: 36px; height: 13px; border-radius: 5px; background: linear-gradient(90deg, #d49355, #9f5634); box-shadow: inset 0 2px #f0bb78; }
+.chicken-one { left: 24%; top: 58%; transform: rotate(15deg); }
+.chicken-two { left: 53%; top: 43%; transform: rotate(-27deg); }
+.chicken-three { left: 22%; top: 30%; transform: rotate(-48deg); }
+.dish-profile-tallarin-saltado .long-chicken { width: 43px; height: 14px; }
+.chicken-four { left: 42%; top: 68%; transform: rotate(8deg); }
+.chicken-five { left: 67%; top: 55%; transform: rotate(-42deg); }
+.chicken-six { left: 8%; top: 39%; transform: rotate(31deg); }
+.vegetable-seven { left: 82%; top: 34%; transform: rotate(66deg); }
+.chicken-seven { left: 45%; top: 18%; transform: rotate(38deg); }
+.chicken-eight { left: 74%; top: 72%; transform: rotate(-18deg); }
+.dish-profile-tallarin-camaron .food-serving { background: #9f673d; }
+.dish-profile-tallarin-camaron .long-vegetable { width: 6px; height: 40px; }
+.dish-profile-tallarin-camaron .shrimp { z-index: 4; transform: scale(.78); }
+.dish-profile-tallarin-camaron .shrimp-one { left: 24%; top: 30%; }
+.dish-profile-tallarin-camaron .shrimp-two { left: 57%; top: 46%; }
+.dish-profile-tallarin-camaron .shrimp-three { left: 39%; top: 68%; }
+.dish-profile-kung-pao .food-serving { background: #a96c3b; }
+.dish-profile-kung-pao .noodle-strand { width: 62px; height: 18px; }
+.kung-vegetable { z-index: 4; width: 14px; height: 12px; border-radius: 3px; background: #78a052; box-shadow: inset 2px 1px #b5c979; }
+.kung-veg-one { left: 12%; top: 21%; transform: rotate(18deg); }
+.kung-veg-two { left: 67%; top: 18%; transform: rotate(-22deg); }
+.kung-veg-three { left: 49%; top: 31%; transform: rotate(32deg); }
+.kung-veg-four { left: 21%; top: 57%; transform: rotate(-14deg); }
+.kung-veg-five { left: 70%; top: 59%; transform: rotate(21deg); }
+.kung-veg-six { left: 43%; top: 74%; transform: rotate(-9deg); }
+.kung-chicken { position: absolute; z-index: 5; width: 20px; height: 17px; border-radius: 4px; background: linear-gradient(135deg, #d9904d, #a85d34); box-shadow: inset 2px 1px #efb56e, 1px 2px 2px #63361f55; }
+.kung-chicken-one { left: 25%; top: 18%; transform: rotate(12deg); }
+.kung-chicken-two { left: 53%; top: 17%; transform: rotate(-19deg); }
+.kung-chicken-three { left: 38%; top: 41%; transform: rotate(25deg); }
+.kung-chicken-four { left: 66%; top: 39%; transform: rotate(-8deg); }
+.kung-chicken-five { left: 18%; top: 72%; transform: rotate(-24deg); }
+.kung-chicken-six { left: 60%; top: 71%; transform: rotate(17deg); }
+.basil { position: absolute; z-index: 6; width: 10px; height: 17px; border-radius: 70% 25% 70% 25%; background: #376b3c; box-shadow: inset 2px 0 #75a45b; }
+.basil-one { left: 35%; top: 24%; transform: rotate(-25deg); }
+.basil-two { left: 75%; top: 47%; transform: rotate(32deg); }
+.basil-three { left: 34%; top: 63%; transform: rotate(18deg); }
+.dish-profile-tallarin-saltado .food-plate { top: 57px; left: 10px; width: 178px; height: 95px; overflow: visible; }
+.dish-profile-tallarin-saltado .food-serving { position: absolute; bottom: 13px; width: 145px; height: 88px; border-radius: 50% 50% 42% 42%; background: radial-gradient(ellipse at 45% 28%, #c48a4b, #86512f 90%); box-shadow: 0 5px 3px #70543130, inset 0 3px 5px #6d3e2455; }
+.dish-profile-tallarin-saltado .dish-broth { inset: 6px 10px; opacity: .72; }
+.dish-profile-tallarin-saltado .noodle-nest { inset: -1px; transform: scale(1.08); }
+.dish-profile-tallarin-saltado .noodle-strand { width: 68px; height: 18px; border-width: 4px; }
+.dish-profile-tallarin-saltado .shrimp { z-index: 5; transform: scale(.78); }
+.dish-profile-tallarin-saltado .shrimp-one { left: 17%; top: 21%; }
+.dish-profile-tallarin-saltado .shrimp-two { left: 59%; top: 33%; }
+.dish-profile-tallarin-saltado .shrimp-three { left: 39%; top: 62%; }
+.saltado-vegetable { position: absolute; z-index: 4; }
+.saltado-onion { width: 24px; height: 7px; border-radius: 55%; background: #f6f0d2; box-shadow: inset 0 1px #ffffff, 0 1px 1px #65442b55; }
+.onion-one { left: 16%; top: 47%; transform: rotate(28deg); }
+.onion-two { left: 62%; top: 67%; transform: rotate(-22deg); }
+.saltado-pepper { width: 27px; height: 6px; border-radius: 5px; background: #d8553f; box-shadow: inset 0 1px #f58a63; }
+.pepper-one { left: 47%; top: 10%; transform: rotate(12deg); }
+.pepper-two { left: 71%; top: 42%; transform: rotate(-31deg); }
+.saltado-cabbage { width: 26px; height: 14px; border-radius: 45% 55% 38% 52%; background: #b7cc91; box-shadow: inset 2px 1px #e2e8b9, 0 1px 1px #65442b44; }
+.cabbage-one { left: 9%; top: 25%; transform: rotate(-20deg); }
+.cabbage-two { left: 55%; top: 47%; transform: rotate(32deg); }
+.saltado-carrot { width: 31px; height: 5px; border-radius: 5px; background: #e8873e; box-shadow: inset 0 1px #ffc06a; }
+.carrot-one { left: 28%; top: 77%; transform: rotate(-14deg); }
+.carrot-two { left: 69%; top: 15%; transform: rotate(48deg); }
+.dish-profile-tallarin-saltado .long-chicken { width: 48px; height: 9px; border-radius: 5px; box-shadow: inset 0 1px #f2bd79, 1px 2px 2px #5e321e55; }
+.dish-profile-chicharrones .dish-broth { z-index: 0; }
+.square-vegetable { width: 13px; height: 11px; border-radius: 2px; background: #779852; box-shadow: inset 2px 1px #b2bf70; }
+.square-one { left: 16%; top: 19%; transform: rotate(15deg); }
+.square-two { left: 69%; top: 20%; transform: rotate(-18deg); }
+.square-three { left: 57%; top: 61%; transform: rotate(26deg); }
+.square-four { left: 27%; top: 69%; transform: rotate(-11deg); }
+.square-five { left: 43%; top: 12%; transform: rotate(9deg); }
+.square-six { left: 8%; top: 47%; transform: rotate(-26deg); }
+.square-seven { left: 76%; top: 43%; transform: rotate(18deg); }
+.square-eight { left: 42%; top: 83%; transform: rotate(-14deg); }
+.fine-vegetable { position: absolute; z-index: 3; height: 4px; border-radius: 50%; }
+.fine-onion { left: 19%; top: 30%; width: 28px; background: #f8f1d9; transform: rotate(18deg); box-shadow: 18px 22px #eee5c6; }
+.fine-carrot { left: 61%; top: 24%; width: 22px; background: #e58b3b; transform: rotate(-24deg); box-shadow: -23px 31px #e58b3b; }
+.fine-cabbage { left: 32%; top: 64%; width: 31px; background: #9bb46e; transform: rotate(9deg); box-shadow: 23px -12px #b7c985; }
+.fine-pepper { left: 67%; top: 62%; width: 17px; background: #cf5a45; transform: rotate(32deg); }
+.dish-profile-chicharrones .food-piece { z-index: 4; }
+.dish-profile-chicharrones .piece-five { top: 52%; left: 22%; }
+.dish-profile-chicharrones .piece-six { top: 32%; left: 50%; }
+.dish-profile-yakisoba .food-serving { background: #9e6439; }
+.dish-profile-yakisoba .noodle-nest { inset: -2px; transform: scale(1.08); }
+.dish-profile-yakisoba .noodle-strand { width: 63px; height: 20px; border-width: 4px; border-radius: 48% 58% 38% 62%; }
+.yakisoba-vegetable { position: absolute; z-index: 4; }
+.yakisoba-cabbage { width: 25px; height: 18px; border-radius: 42% 58% 48% 52%; background: #b8ca92; box-shadow: inset 2px 1px #e4e9bd, 0 1px 1px #5e472c55; }
+.cabbage-one { left: 10%; top: 21%; transform: rotate(-18deg); }
+.cabbage-two { left: 61%; top: 18%; transform: rotate(22deg); }
+.cabbage-three { left: 56%; top: 62%; transform: rotate(-28deg); }
+.yakisoba-carrot { width: 28px; height: 8px; border-radius: 3px; background: #e68132; box-shadow: inset 1px 1px #ffb85b; }
+.carrot-one { left: 20%; top: 63%; transform: rotate(31deg); }
+.carrot-two { left: 66%; top: 45%; transform: rotate(-42deg); }
+.yakisoba-onion { width: 25px; height: 7px; border-radius: 50%; background: #f4eed3; box-shadow: inset 0 1px #fffdf1; }
+.onion-one { left: 35%; top: 17%; transform: rotate(-24deg); }
+.onion-two { left: 27%; top: 43%; transform: rotate(34deg); }
+.yakisoba-pepper { width: 22px; height: 8px; border-radius: 4px; background: #5c864d; box-shadow: inset 2px 1px #9ab56b; }
+.pepper-one { left: 72%; top: 27%; transform: rotate(18deg); }
+.pepper-two { left: 43%; top: 73%; transform: rotate(-19deg); }
+.small-chicken { width: 16px; height: 12px; border-radius: 3px; background: #c77c40; box-shadow: inset 2px 1px #f0b66f; }
+.small-one { left: 23%; top: 25%; transform: rotate(12deg); }
+.small-two { left: 63%; top: 30%; transform: rotate(-19deg); }
+.small-three { left: 36%; top: 57%; transform: rotate(25deg); }
+.small-four { left: 70%; top: 62%; transform: rotate(-8deg); }
 #view-menu .menu-item-card .serving-note { color: var(--muted); font-size: 11px; margin: 0 0 10px; }
 .dish-stirfry .food-serving { background: #c8b06d; }
 .dish-stirfry .food-piece { width: 28px; height: 24px; border-radius: 9px; background: #ae653b; }
