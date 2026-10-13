@@ -359,3 +359,41 @@
   #order-reading-modal .reading-status dt { margin-bottom: 2px; }
   #order-reading-modal .reading-status dd { font-size: 16px; }
 }
+
+/* Dark mode follows the device. Light stays the default. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #141816; --paper-subtle: #1d231f; --panel: #222923;
+    --ink: #eef1e8; --muted: #a9b4a3; --line: #39423a; --control-line: #5c665c;
+    --coral: #d6543a; --coral-dark: #ec7b5e; --coral-soft: #3a2220; --coral-glow: #d6543a2e;
+    --gold: #b3a06a; --gold-dark: #d3c08a; --gold-soft: #35311f; --line-gold: #57503a;
+    --sage: #7fa88c; --mint: #223026; --yellow: #d9b36a; --amber-soft: #38311f;
+    --success-ink: #8fc39a; --success-surface: #223026; --success-line: #3c5545;
+    --warning-ink: #dcb76e; --warning-surface: #38311f; --warning-line: #5d5136;
+    --info-ink: #9dc2b8; --info-surface: #232e2b; --info-line: #3a4f49;
+  }
+  /* Surfaces that stay dark instead of flipping light. */
+  #main-sidebar, .login-story { background: #0e120e; }
+  .metric-card.highlight { background: #0e120e; }
+  .brand-mark { background: radial-gradient(circle at 50% 125%, #4a2c14, #0e120e 62%); }
+  .toast { background: #0e120e; color: var(--panel); border-color: var(--line); }
+  .modal-backdrop { background: rgb(0 0 0 / 62%); }
+  #main-sidebar .nav-item.active { background: var(--coral); }
+  /* Hard-coded light surfaces mapped to dark tokens. */
+  .segmented-control button.active { background: var(--panel); }
+  .segmented-control, .menu-tabs { background: #1a201b; }
+  .search-field, .modal input, .modal select, .modal textarea, .login-card input, .size-row input, .order-item-row input, .order-item-row select { background: var(--panel); border-color: var(--control-line); color: var(--ink); }
+  .client-picker > [data-client-search] { background: var(--panel); color: var(--ink); }
+  .order-category-filters button, #order-modal .order-product-card, #order-modal .quantity-stepper button { background: var(--panel); }
+  .modal .drink-color-option { background: var(--panel); }
+  #view-menu .menu-actions .edit-button { background: var(--paper-subtle); }
+  .customer-menu #view-menu { background: var(--paper); }
+  #view-menu .menu-tabs button { background: var(--paper-subtle); border-color: var(--line); }
+  #view-menu .menu-layout { background: var(--paper-subtle); }
+  #view-menu .menu-layout button[aria-pressed="true"] { background: var(--ink); color: #141816; }
+  .neutral, .inactive-tag { background: var(--paper-subtle); color: var(--muted); }
+  .peach { background: #3a2220; color: var(--coral-dark); border-color: #b82f2455; }
+  tbody tr:hover { background: var(--paper-subtle); }
+  ::selection { background: #6e2a20; color: var(--ink); }
+}
