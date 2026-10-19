@@ -15,6 +15,10 @@ input, select, textarea, .modal input, .modal select, .modal textarea { font-siz
 .order-product-card .food-art, .order-product-card .drink-art { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.58); }
 .order-card-name { padding: 0 10px; font-weight: 700; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
 .order-card-price { padding: 0 10px; margin-top: auto; color: var(--coral-dark); font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; gap: 4px; }
+.order-card-add, .order-card-remove { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 5px; color: var(--coral); background: var(--coral-soft); font-size: 19px; line-height: 1; cursor: pointer; }
+.order-card-remove { order: 3; color: var(--coral-dark); background: #f3d9d2; font-size: 20px; }
+.order-card-add { order: 2; margin-left: auto; }
+.order-card-add:hover, .order-card-remove:hover { background: var(--coral); color: #fff; }
 .order-catalog-hint, .catalog-empty { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0; }
 .catalog-empty { grid-column: 1 / -1; padding: 20px; }
 .comanda-title { font-size: 17px; margin: 14px 0 4px; }

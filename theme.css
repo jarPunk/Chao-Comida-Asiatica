@@ -123,6 +123,84 @@ tbody tr:hover, .order-row:hover { background: #f7f9fc; transform: none; }
 .stats-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; }
 .chart-panel, .stats-list { padding: 28px; }
 .chart-period { font-size: 12px; color: var(--muted); }
+
+@media (prefers-color-scheme: dark) {
+  #view-clientes {
+    --client-bg: #141816;
+    --client-panel: #202622;
+    --client-panel-raised: #28312d;
+    --client-line: #3a4740;
+    --client-ink: #f4f1e8;
+    --client-muted: #aeb8ae;
+  }
+
+  #view-clientes .page-heading h1,
+  #view-clientes .client-summary strong,
+  #view-clientes table strong {
+    color: var(--client-ink);
+  }
+
+  #view-clientes .heading-subtitle,
+  #view-clientes .client-summary span,
+  #view-clientes .table-toolbar,
+  #view-clientes table {
+    color: var(--client-muted);
+  }
+
+  #view-clientes .client-summary > div,
+  #view-clientes .table-panel {
+    background: var(--client-panel);
+    border-color: var(--client-line);
+  }
+
+  #view-clientes .search-field,
+  #view-clientes .date-picker,
+  #view-clientes .table-toolbar .secondary-button {
+    background: var(--client-panel-raised);
+    border-color: var(--client-line);
+    color: var(--client-ink);
+  }
+
+  #view-clientes .search-field input,
+  #view-clientes .date-picker input {
+    color: var(--client-ink);
+    color-scheme: dark;
+  }
+
+  #view-clientes .search-field svg,
+  #view-clientes .date-picker svg {
+    color: var(--client-muted);
+  }
+
+  #view-clientes th {
+    background: var(--client-panel-raised);
+    color: var(--client-muted);
+  }
+
+  #view-clientes td {
+    border-color: var(--client-line);
+  }
+
+  #view-clientes tbody tr:hover {
+    background: #2d3832;
+  }
+
+  #view-clientes .peach {
+    background: #3a211d;
+    border-color: #713126;
+    color: #ff8a72;
+  }
+
+  #view-clientes .active-tag {
+    background: #20362c;
+    color: #91d7aa;
+  }
+
+  #view-clientes .inactive-tag {
+    background: var(--client-panel-raised);
+    color: var(--client-muted);
+  }
+}
 .chart { min-height: 220px; display: grid; place-items: center; border-top: 1px solid var(--line); }
 .date-picker input { border: 0; background: transparent; color: var(--ink); min-width: 0; }
 @media (max-width: 1100px) { .stats-grid { grid-template-columns: 1fr; } }

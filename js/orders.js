@@ -145,7 +145,6 @@ function addSelectedOrderItem() {
   enhanceOrderItem(item);
   item.classList.add('just-added');
   window.setTimeout(() => item.classList.remove('just-added'), 650);
-  item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   document.querySelector('.order-quantity').value = '1';
   productSelect.value = '';
   sizeSelect.innerHTML = '<option>Tamaño</option>';
@@ -155,6 +154,12 @@ function addSelectedOrderItem() {
   preparationSelect.innerHTML = preparationOptions(product).map((variation, index) => `<option value="${variation.id}" ${index === 0 ? 'selected' : ''}>${variation.nombre}</option>`).join('');
   refreshIcons();
   updateOrderTotal();
+  renderOrderCatalog();
+  const selectedCard = document.querySelector(`[data-order-card="${CSS.escape(String(product.id))}"]`);
+  if (selectedCard) {
+    selectedCard.classList.add('is-adding');
+    window.setTimeout(() => selectedCard.classList.remove('is-adding'), 500);
+  }
 }
 
 function updateOrderTotal() {
@@ -180,6 +185,7 @@ function updateEditableOrderItem(item) {
   const totalEl = item.querySelector('.line-total');
   if (totalEl) totalEl.textContent = `Bs ${(Number(item.dataset.quantity) * Number(item.dataset.price || 0)).toFixed(2)}`;
   updateOrderTotal();
+  renderOrderCatalog();
 }
 
 async function togglePayment(id) {
@@ -202,7 +208,7 @@ async function togglePayment(id) {
 
 function orderItemsMarkup(order) {
   if (!order.details?.length) return `<span class="order-item-box"><span class="qty">•</span><span class="order-item-text"><strong>${menuEscape(order.items)}</strong></span></span>`;
-  return order.details.map((detail) => {
+  const itemMarkup = (detail) => {
     const productName = detail.productos?.nombre || 'Producto';
     const product = products.find((item) => item.nombre === productName);
     const size = findOrderSize(product, detail);
@@ -213,7 +219,18 @@ function orderItemsMarkup(order) {
     const prepSlug = variation.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
     const prepBadge = variation ? `<small class="opt opt-prep opt-${prepSlug}" title="Sabor: ${menuEscape(variation)}">${menuEscape(variation)}</small>` : '';
     return `<span class="order-item-box${kind}"><span class="qty">${menuEscape(detail.cantidad)}×</span><span class="order-item-text"><strong>${menuEscape(productName)}</strong>${sizeBadge}${prepBadge}</span></span>`;
-  }).join('');
+  };
+  const isDrinkDetail = (detail) => {
+    const productName = detail.productos?.nombre || '';
+    return products.find((item) => item.nombre === productName)?.tipo === 'BEBIDA';
+  };
+  if (!order.details.some(isDrinkDetail)) {
+    const dishes = order.details.map(itemMarkup).join('');
+    return `<div class="order-items-divider is-dish" role="separator"><span>Platos</span></div><div class="order-dishes">${dishes}</div>`;
+  }
+  const dishMarkup = order.details.filter((detail) => !isDrinkDetail(detail)).map(itemMarkup).join('');
+  const drinkMarkup = order.details.filter(isDrinkDetail).map(itemMarkup).join('');
+  return `<div class="order-items-divider is-dish" role="separator"><span>Platos</span></div><div class="order-dishes">${dishMarkup}</div><div class="order-items-divider is-drink" role="separator"><span>Refrescos</span></div><div class="order-drinks">${drinkMarkup}</div>`;
 }
 
 function orderMarkup(order, compact = false) {
@@ -247,7 +264,6 @@ function orderMarkup(order, compact = false) {
     <div class="board-card-top">
       <span>#${order.id}</span>
       <div class="card-actions">
-        <span>${order.type}</span>
         <button class="btn-action" data-edit-order="${order.databaseId}" title="Editar pedido"><i data-lucide="pencil"></i></button>
         <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
       </div>
@@ -256,6 +272,7 @@ function orderMarkup(order, compact = false) {
     <div class="board-card-bottom">
       <strong>${order.total}</strong>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
+      <span class="order-service" title="${order.type}" aria-label="Tipo de pedido: ${order.type}"><i data-lucide="${iconForType(order.type)}"></i><span>${order.type}</span></span>
       <button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregado' : 'Avanzar'}</button>
     </div>
   </article>`;
@@ -601,12 +618,11 @@ document.querySelector('#order-form').addEventListener('submit', async (event) =
       }
 
     }
-    await loadOrders();
+    loadOrders();
     } finally {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtn; refreshIcons(); }
     }
   }
   closeModal();
-  if (supabaseClient) showSuccessConfirmation(orderId ? '¡Pedido actualizado!' : '¡Pedido registrado!', 'El pedido y sus productos se guardaron correctamente.');
+  if (supabaseClient) showSuccessConfirmation(orderId ? '¡Pedido actualizado!' : '¡Pedido registrado!', '', { brief: true, messageOnly: true });
 });
-

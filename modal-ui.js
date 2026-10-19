@@ -4,7 +4,7 @@ let dialogOpener = null;
 let backgroundWasInert = false;
 const dialogStack = [];
 
-function showSuccessConfirmation(message, detail = 'Los datos se guardaron correctamente.', { brief = false } = {}) {
+function showSuccessConfirmation(message, detail = 'Los datos se guardaron correctamente.', { brief = false, messageOnly = false } = {}) {
   let backdrop = document.querySelector('#success-modal');
   if (!backdrop) {
     backdrop = document.createElement('div');
@@ -17,13 +17,14 @@ function showSuccessConfirmation(message, detail = 'Los datos se guardaron corre
   backdrop.querySelector('#success-title').textContent = message;
   backdrop.querySelector('#success-description').textContent = detail;
   backdrop.classList.toggle('brief-confirmation', brief);
+  backdrop.querySelector('#success-description').hidden = messageOnly;
   backdrop.querySelector('.modal-close').hidden = brief;
   backdrop.querySelector('.modal-footer').hidden = brief;
   backdrop.querySelector('.confirmation-caption').hidden = brief;
   document.querySelector('#toast')?.classList.remove('show');
   showDialog('success-modal', { nested: Boolean(activeDialog) });
   window.clearTimeout(showSuccessConfirmation.timeout);
-  showSuccessConfirmation.timeout = window.setTimeout(() => hideDialog('success-modal'), brief ? 800 : 3000);
+  showSuccessConfirmation.timeout = window.setTimeout(() => hideDialog('success-modal'), brief ? 700 : 3000);
 }
 
 function showDialog(id, { nested = false } = {}) {

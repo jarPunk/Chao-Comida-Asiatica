@@ -6,6 +6,15 @@
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
+#order-modal .selected-order-item.is-drink .line-kind {
+  background: #c5e4de;
+  border-color: #9fc8c1;
+  color: #176b64;
+}
+#order-modal .selected-order-item.is-drink .quantity-stepper button {
+  background: #d9ece8;
+  border-color: #9fc8c1;
+}
 #view-pedidos .segmented-control {
   padding: 0;
   gap: 4px;
@@ -102,6 +111,72 @@
 #view-pedidos .order-item-box .opt-prep::before { content: '🌶 '; font-size: 9px; }
 #view-pedidos .order-item-box .opt-agridulce { background: #fdf6e3; color: #8a6d1c; border-color: #e6d194; }
 #view-pedidos .order-item-box .opt-agridulce::before { content: '⬢ '; font-size: 9px; }
+#view-pedidos .order-items-divider,
+#view-inicio .order-items-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0 1px;
+  color: var(--info-ink);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+#view-pedidos .order-items-divider.is-dish,
+#view-inicio .order-items-divider.is-dish {
+  color: var(--coral-dark);
+}
+#view-pedidos .order-items-divider::before,
+#view-pedidos .order-items-divider::after,
+#view-inicio .order-items-divider::before,
+#view-inicio .order-items-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--info-line);
+}
+#view-pedidos .order-items-divider.is-dish::before,
+#view-pedidos .order-items-divider.is-dish::after,
+#view-inicio .order-items-divider.is-dish::before,
+#view-inicio .order-items-divider.is-dish::after {
+  background: var(--coral);
+}
+#view-pedidos .order-dishes,
+#view-inicio .order-dishes {
+  display: grid;
+  gap: 4px;
+}
+#view-pedidos .order-drinks,
+#view-inicio .order-drinks {
+  display: grid;
+  gap: 4px;
+  padding-left: 6px;
+  border-left: 2px solid var(--info-line);
+}
+#view-pedidos .order-drinks .order-item-box,
+#view-inicio .order-drinks .order-item-box {
+  border-left-color: var(--info-ink);
+  background: var(--info-surface);
+  border-color: var(--info-line);
+  color: var(--info-ink);
+}
+#view-pedidos .order-drinks .order-item-box strong,
+#view-inicio .order-drinks .order-item-box strong {
+  color: var(--info-ink);
+}
+#view-pedidos .order-drinks .order-item-box .qty,
+#view-inicio .order-drinks .order-item-box .qty {
+  background: var(--info-ink);
+  color: var(--info-surface);
+}
+#view-pedidos .order-drinks .order-item-box .opt,
+#view-inicio .order-drinks .order-item-box .opt {
+  background: color-mix(in srgb, var(--info-surface) 72%, var(--info-ink));
+  border-color: var(--info-line);
+  color: var(--info-ink);
+}
 #view-inicio .order-customer .order-items { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
 #view-inicio .order-item-box { display: flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--line); border-left: 2px solid var(--coral); border-radius: 4px; background: var(--paper); overflow-wrap: anywhere; min-width: 0; }
 #view-inicio .order-item-box.is-drink { border-left-color: var(--info-ink); }
@@ -117,6 +192,22 @@
 #view-pedidos .board-card-bottom { gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px dashed var(--control-line); }
 #view-pedidos .board-card-bottom > strong { font-family: var(--font-body, inherit); font-size: 17px; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
 #view-pedidos .board-card-bottom .payment-status { margin: 0 0 0 auto; min-height: 34px; padding: 6px 8px; border-radius: 4px; font-size: 11px; }
+#view-pedidos .order-service {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  background: var(--paper-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+#view-pedidos .order-service svg { width: 14px; height: 14px; color: var(--info-ink); }
+#view-pedidos .order-service + .check-button { margin-left: 0; }
 #view-pedidos .payment-status.paid { color: var(--success-ink); background: var(--success-surface); }
 #view-pedidos .payment-status.unpaid { color: var(--warning-ink); background: var(--warning-surface); }
 #view-pedidos .check-button { padding: 9px 10px; min-height: 36px; background: var(--ink); color: var(--panel); border-radius: 4px; font-size: 11px; }
@@ -188,6 +279,8 @@
 
 /* The catalogue and comanda sit together on wide screens, then stack on mobile. */
 #order-modal .modal { width: min(1120px, 100%); }
+#order-modal .modal form { min-height: 0; overflow: hidden; grid-template-rows: auto minmax(0, 1fr) auto; }
+#order-modal .modal-body { min-height: 0; overflow-y: auto; }
 #order-modal .order-details, #order-modal .order-notes { border-radius: 6px; background: var(--panel); }
 #order-modal .order-details > summary, #order-modal .order-notes > summary { padding: 14px 16px; }
 #order-modal .order-details > summary strong, #order-modal .order-notes > summary strong { font-size: 14px; }
@@ -197,11 +290,12 @@
 #order-modal .order-details-content > label:first-child { grid-column: 1 / -1; }
 #order-modal .order-type-selection { grid-column: 1 / 2; min-width: 0; margin: 0; padding: 0; border: 0; }
 #order-modal .order-sticky-bar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 8px; align-items: stretch; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; box-shadow: 0 6px 14px -10px #20262255; }
+#order-modal .order-sticky-bar { padding: 7px; gap: 7px; align-items: center; }
 #order-modal .order-sticky-bar .order-type-selection { grid-column: auto; }
 #order-modal .order-sticky-bar .payment-check { margin: 0; justify-content: center; }
-#order-modal .order-type-selection legend { margin-bottom: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
+#order-modal .order-type-selection legend { margin-bottom: 4px; color: var(--muted); font-size: 11px; font-weight: 700; }
 #order-modal .order-type-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-#order-modal .order-type-option { display: flex; align-items: center; min-width: 0; min-height: 58px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); cursor: pointer; }
+#order-modal .order-type-option { display: flex; align-items: center; min-width: 0; min-height: 48px; margin: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); cursor: pointer; }
 #order-modal .order-type-option:has(:checked) { border-color: var(--coral); background: var(--coral-soft); box-shadow: inset 0 0 0 1px var(--coral); }
 #order-modal .order-type-option input { width: 16px; height: 16px; margin: 0 9px 0 0; accent-color: var(--coral); flex-shrink: 0; }
 #order-modal .order-type-option span { display: grid; gap: 3px; min-width: 0; }
@@ -211,7 +305,7 @@
 #order-modal .order-category-filters { gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
 #order-modal .order-category-filters button { border-radius: 4px; padding: 8px 13px; border-color: transparent; background: transparent; font-size: 12px; }
 #order-modal .order-category-filters button.active { color: var(--panel); background: var(--ink); border-color: var(--ink); }
-#order-modal .order-catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: start; }
+#order-modal .order-catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-content: start; }
 #order-modal .order-product-card { position: relative; border-radius: 6px; gap: 8px; background: var(--panel); border-color: var(--line); min-width: 0; padding-bottom: 12px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
 #order-modal .order-product-card:hover { border-color: var(--coral); box-shadow: 0 2px 0 var(--coral-soft); }
 #order-modal .order-product-card:active { background: var(--coral-soft); transform: scale(.94); border-color: var(--coral); }
@@ -222,38 +316,58 @@
 #order-modal .order-product-card .menu-visual { height: 95px; border-bottom: 1px solid var(--line); }
 #order-modal .order-product-card .food-art { transform: translate(-50%, -50%) scale(.5); }
 #order-modal .order-product-card .drink-art { transform: translate(-50%, -50%) scale(.5); }
+#order-modal .order-product-card.has-selection { border-color: var(--coral); box-shadow: inset 0 0 0 1px var(--coral); }
+#order-modal .order-product-card.is-adding { animation: catalogAdd .5s cubic-bezier(.2,.8,.2,1); }
+#order-modal .order-product-card[data-kind="drink"] { background: #eaf4f2; border-color: #9fc8c1; }
+#order-modal .order-product-card[data-kind="drink"] .menu-visual { background: #d9ece8; }
+#order-modal .order-product-card[data-kind="drink"] .order-card-name { color: #245c58; }
+#order-modal .order-product-card[data-kind="drink"] .order-card-price { color: #21736c; }
+#order-modal .order-product-card[data-kind="drink"] .order-card-add { color: #176b64; background: #c5e4de; }
+#order-modal .order-card-count { position: absolute; top: 8px; right: 8px; z-index: 3; display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px #20262230; }
+#order-modal .order-card-remove { position: absolute; right: 40px; top: 7px; z-index: 4; width: 24px; height: 24px; }
+#order-modal .order-card-price { align-items: center; }
 #order-modal .order-card-name { font-size: 12px; line-height: 1.4; }
 #order-modal .order-card-price { align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
 #order-modal .order-card-price > span { width: 23px; height: 23px; display: grid; place-items: center; background: var(--coral-soft); border-radius: 4px; flex-shrink: 0; font-size: 17px; }
 #order-modal .order-catalog-hint { font-size: 11px; }
 #order-modal .comanda-title { font-family: var(--font-body, inherit); font-size: 17px; letter-spacing: -.02em; margin: 4px 0 0; padding: 0 0 12px; border-bottom: 2px solid var(--ink); }
-#order-modal .selected-order-items { gap: 12px; margin-top: 0; align-content: start; }
+#order-modal .selected-order-items { gap: 6px; margin-top: 0; align-content: start; }
 #order-modal .selected-order-items:empty { min-height: 58px; }
 #order-modal .selected-order-items:empty::before { content: 'Toca un plato para empezar tu pedido.'; display: block; padding: 18px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-#order-modal .selected-order-item:has(.selected-order-quantity) { grid-template-columns: minmax(0, 1fr) auto auto; padding: 14px; border-radius: 6px; border-color: var(--line); background: var(--panel); gap: 10px 6px; }
+#order-modal .selected-order-item:has(.selected-order-quantity) { grid-template-columns: minmax(0, 1fr) 86px 68px 32px; padding: 8px 9px; min-height: 48px; border-radius: 6px; border-color: var(--line); background: var(--panel); gap: 6px; }
 #order-modal .selected-order-item.is-dish { border-left: 3px solid var(--coral); }
 #order-modal .selected-order-item.is-drink { border-left: 3px solid var(--info-ink); }
 #order-modal .selected-order-item.is-extra { border-left: 3px solid var(--gold); }
 @keyframes comandaPop { 0% { background: var(--coral-soft); transform: translateY(-5px) scale(.99); } 100% { background: var(--panel); transform: none; } }
 #order-modal .selected-order-item.just-added { animation: comandaPop .6s ease; }
+#order-modal .selected-order-item.is-drink { background: #eaf4f2; border-color: #9fc8c1; }
 #order-modal .selected-order-label { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 #order-modal .line-kind { font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
 #order-modal .is-dish .line-kind { background: var(--coral-soft); color: var(--coral-dark); border-color: #e9c2b5; }
 #order-modal .is-drink .line-kind { background: var(--info-surface); color: var(--info-ink); border-color: var(--info-line); }
 #order-modal .is-extra .line-kind { background: var(--gold-soft); color: var(--gold-dark); border-color: var(--line-gold); }
-#order-modal .line-total { grid-column: 3; grid-row: 2; align-self: center; justify-self: end; font-size: 12px; font-weight: 800; color: var(--coral-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#order-modal .line-total { grid-column: 3; grid-row: 1; align-self: center; justify-self: end; width: 68px; text-align: right; font-size: 12px; font-weight: 800; color: var(--coral-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#order-modal .selected-order-item.is-drink .line-total { color: #21736c; }
 #order-modal .selected-order-item > .remove-order-item { justify-self: end; }
 @media (prefers-reduced-motion: reduce) {
   #order-modal .order-product-card:active { transform: none; }
+  #order-modal .order-product-card.is-adding,
   #order-modal .selected-order-item.just-added { animation: none; }
 }
-#order-modal .selected-order-item .selected-order-label { grid-column: 1 / 3; font-size: 14px; font-weight: 700; line-height: 1.5; }
-#order-modal .selected-order-item .quantity-stepper { grid-column: 1 / 3; grid-row: 2; }
-#order-modal .quantity-stepper button { border-radius: 4px; width: 44px; height: 44px; background: var(--paper); border-color: var(--line); }
-#order-modal .quantity-stepper input { flex: 0 0 54px; width: 54px; min-height: 44px; text-align: center; padding: 7px 2px; border-radius: 4px; }
-#order-modal .selected-order-item > .remove-order-item { border-radius: 4px; background: transparent; color: var(--coral-dark); }
+#order-modal .selected-order-item .selected-order-label { grid-column: 1; font-size: 12px; font-weight: 700; line-height: 1.25; }
+#order-modal .selected-order-item .line-name { min-width: 0; overflow-wrap: anywhere; }
+#order-modal .selected-order-item .quantity-stepper { grid-column: 2; grid-row: 1; }
+#order-modal .quantity-stepper { min-width: 0; }
+#order-modal .quantity-stepper button { border-radius: 4px; width: 26px; height: 28px; min-height: 28px; padding: 0; background: var(--paper); border-color: var(--line); font-size: 16px; }
+#order-modal .quantity-stepper button:not(:disabled):hover { background: var(--coral); border-color: var(--coral); color: #fff; }
+#order-modal .quantity-stepper input { flex: 0 0 30px; width: 30px; min-height: 28px; text-align: center; padding: 3px 1px; border-radius: 4px; font-size: 12px !important; }
+#order-modal .selected-order-item.is-drink .quantity-stepper button:not(:disabled) { background: #c5e4de; border-color: #9fc8c1; color: #176b64; }
+#order-modal .selected-order-item.is-drink .quantity-stepper button:disabled { background: #d9ece8; border-color: #9fc8c1; color: #5d8580; opacity: 1; }
+#order-modal .selected-order-item.is-drink .quantity-stepper button:not(:disabled):hover { background: #21736c; border-color: #21736c; color: #fff; }
+#order-modal .selected-order-item > .remove-order-item { grid-column: 4; grid-row: 1; display: grid; place-items: center; width: 30px; height: 30px; min-height: 30px; padding: 0; border-radius: 4px; background: var(--coral-soft); color: var(--coral-dark); }
+#order-modal .selected-order-item > .remove-order-item svg { width: 14px; height: 14px; }
 #order-modal .selected-order-item > .remove-order-item:hover { background: var(--coral-soft); }
-#order-modal .order-line-options { grid-row: 3; grid-template-columns: 1fr; gap: 14px; border-top: 1px dashed var(--line); padding-top: 12px; }
+#order-modal .order-line-options { grid-column: 1 / -1; grid-row: 2; grid-template-columns: 1fr; gap: 14px; border-top: 1px dashed var(--line); padding-top: 12px; }
 #order-modal .order-option-group legend { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 7px; }
 #order-modal .order-option-buttons { gap: 6px; }
 #order-modal .order-option-label { min-height: 42px; border-radius: 4px; padding: 8px 10px; gap: 6px; border-color: var(--line); }
@@ -265,6 +379,11 @@
 #order-modal .order-total-box { border-top: 2px solid var(--ink); padding-top: 14px; gap: 12px; margin-top: 4px; color: var(--muted); font-size: 12px; }
 #order-modal .order-total-box strong { font-family: var(--font-display, sans-serif); font-size: 30px; letter-spacing: -.015em; color: var(--ink); }
 #order-modal .payment-check:has(:checked) { border-color: var(--success-line); background: var(--success-surface); color: var(--success-ink); }
+@keyframes catalogAdd {
+  0% { transform: scale(1); }
+  35% { transform: translateY(-6px) scale(1.035); box-shadow: 0 10px 22px #b82f2440; }
+  100% { transform: scale(1); }
+}
 
 /* Reading an order should feel like a legible, complete kitchen ticket. */
 #order-reading-modal .modal { width: min(720px, 100%); }
@@ -282,16 +401,67 @@
 #order-reading-modal .reading-items li > strong { font-weight: 650; }
 #order-reading-modal .reading-items li > span { font-size: 14px; }
 #order-reading-modal .reading-items li > span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+#order-reading-modal .reading-items .reading-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: center;
+  padding: 13px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--coral);
+  border-radius: 6px;
+  background: var(--paper);
+}
+#order-reading-modal .reading-items .reading-item > strong { grid-column: 1; min-width: 0; overflow-wrap: anywhere; }
+#order-reading-modal .reading-items .reading-item > span { grid-column: 1; }
+#order-reading-modal .reading-items .reading-item .reading-item-price { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+#order-reading-modal .reading-items .reading-item.is-drink {
+  border-left-color: var(--info-ink);
+  border-color: var(--info-line);
+  background: var(--info-surface);
+}
+#order-reading-modal .reading-items .reading-item.is-drink > strong,
+#order-reading-modal .reading-items .reading-item.is-drink > span:last-child { color: var(--info-ink); }
+#order-reading-modal .reading-items .reading-items-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0 1px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--info-ink);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+#order-reading-modal .reading-items .reading-items-divider::before,
+#order-reading-modal .reading-items .reading-items-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--info-line);
+}
+#order-reading-modal .reading-items .reading-items-divider.is-dish {
+  color: var(--coral-dark);
+}
+#order-reading-modal .reading-items .reading-items-divider.is-dish::before,
+#order-reading-modal .reading-items .reading-items-divider.is-dish::after {
+  background: var(--coral);
+}
+#order-reading-modal .modal-body { padding-bottom: 32px; }
 #order-reading-modal .reading-notes { margin-top: 20px; padding: 14px 16px; background: var(--paper); border-left: 3px solid var(--coral); border-radius: 0 4px 4px 0; }
 #order-reading-modal .reading-notes h3 { margin: 0 0 6px; font-family: var(--font-body, inherit); font-size: 13px; }
 #order-reading-modal .reading-notes p { margin: 0; font-size: 14px; }
 #order-reading-modal .reading-total strong { font-family: var(--font-display, sans-serif); font-size: 32px; letter-spacing: -.015em; }
 
 @media (min-width: 961px) {
-  #order-modal .order-items-builder { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: auto minmax(40px, auto) auto auto; gap: 18px 24px; align-items: start; }
+  #order-modal .order-items-builder { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr); grid-template-rows: auto minmax(40px, 1fr) auto auto; gap: 14px 22px; align-items: start; }
   #order-modal .order-catalog { grid-column: 1; grid-row: 1 / 5; }
   #order-modal .comanda-title { grid-column: 2; grid-row: 1; }
-  #order-modal .selected-order-items { grid-column: 2; grid-row: 2; }
+  #order-modal .selected-order-items { grid-column: 2; grid-row: 2; max-height: min(48vh, 390px); overflow-y: auto; padding-right: 4px; }
   #order-modal .order-total-box { grid-column: 2; grid-row: 3; }
   #order-modal .order-form-error { grid-column: 2; grid-row: 4; }
 }
@@ -330,10 +500,228 @@
   #view-menu .menu-results-bar { gap: 8px; }
 }
 @media (max-width: 640px) {
+  #order-modal .modal form { overflow-y: auto;   }
+
+  /* Compact command lines keep the remove action visible beside the quantity. */
+  #order-modal .selected-order-item:has(.selected-order-quantity) {
+    grid-template-columns: minmax(0, 1fr) 86px 68px 32px;
+    gap: 6px;
+    padding: 8px 9px;
+  }
+  #order-modal .selected-order-item .selected-order-label {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  #order-modal .selected-order-item .quantity-stepper {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  #order-modal .line-total {
+    grid-column: 3;
+    width: 68px;
+    grid-row: 1;
+  }
+  #order-modal .selected-order-item > .remove-order-item {
+    grid-column: 4;
+    grid-row: 1;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+  }
+  #order-modal .selected-order-item > .remove-order-item svg {
+    width: 14px;
+    height: 14px;
+  }
+  #order-modal .quantity-stepper button {
+    width: 26px;
+    height: 28px;
+  }
+  #order-modal .quantity-stepper input {
+    width: 30px;
+    min-height: 28px;
+    flex-basis: 30px;
+  }
+  #order-modal .order-type-option {
+    min-height: 46px;
+    padding: 6px 9px;
+  }
+  #order-modal .order-sticky-bar {
+    padding: 6px;
+  }
+  #order-modal .order-line-options {
+    gap: 6px;
+    border-top: 1px dashed var(--line);
+    padding-top: 6px;
+  }
+  #order-modal .order-option-group legend {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+  #order-modal .order-option-buttons {
+    gap: 4px;
+  }
+  #order-modal .order-option-label {
+    min-height: 30px;
+    padding: 4px 7px;
+    border-radius: 4px;
+  }
+  #order-modal .order-option-label::before {
+    width: 10px;
+    height: 10px;
+    flex-basis: 10px;
+  }
+  #order-modal .order-option-text {
+    font-size: 11px;
+  }
+  #order-modal .order-option-price {
+    margin-top: 1px;
+    font-size: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #order-modal .modal,
+    #order-modal .modal-body,
+    #order-modal .modal-footer,
+    #order-modal .order-details,
+    #order-modal .order-notes,
+    #order-modal .order-sticky-bar,
+    #order-modal .selected-order-item {
+      background: #202622;
+      color: #f4f1e8;
+      border-color: #3a4740;
+    }
+    #order-modal .order-catalog-hint,
+    #order-modal .order-option-group legend,
+    #order-modal .order-total-box,
+    #order-modal .order-details > summary span,
+    #order-modal .order-notes > summary span {
+      color: #aeb8ae;
+    }
+    #order-modal .order-category-filters {
+      border-color: #3a4740;
+    }
+    #order-modal .order-category-filters button:not(.active),
+    #order-modal .order-option-label,
+    #order-modal .quantity-stepper button,
+    #order-modal .quantity-stepper input {
+      background: #28312d;
+      color: #f4f1e8;
+      border-color: #3a4740;
+    }
+    #order-modal .order-product-card[data-kind="dish"],
+    #order-modal .order-product-card[data-kind="extra"] {
+      background: #202622;
+      border-color: #3a4740;
+    }
+    #order-modal .order-product-card[data-kind="dish"] .menu-visual,
+    #order-modal .order-product-card[data-kind="extra"] .menu-visual {
+      background: #28312d;
+    }
+    #order-modal .order-card-name {
+      color: #f4f1e8;
+    }
+    #order-modal .order-card-price {
+      color: #ff9a86;
+    }
+    #order-modal .order-card-price > span {
+      background: #3a211d;
+      color: #ffb09e;
+    }
+    #order-modal .modal h2,
+    #order-modal .modal label,
+    #order-modal .order-details > summary,
+    #order-modal .order-notes > summary {
+      color: #f4f1e8;
+    }
+    #order-modal .order-product-card[data-kind="dish"]::after {
+      background: #3a211d;
+      color: #ffb09e;
+      border-color: #713126;
+    }
+    #order-modal .order-product-card[data-kind="extra"]::after {
+      background: #3c3523;
+      color: #f3d78a;
+      border-color: #75633b;
+    }
+    #order-modal .order-product-card[data-kind="drink"] {
+      background: #1d302e;
+      border-color: #3d7069;
+    }
+    #order-modal .order-product-card[data-kind="drink"] .menu-visual {
+      background: #25413d;
+    }
+    #order-modal .order-product-card[data-kind="drink"] .order-card-name {
+      color: #b8e4dc;
+    }
+    #order-modal .order-product-card[data-kind="drink"] .order-card-price {
+      color: #8fd2c6;
+    }
+    #order-modal .order-product-card[data-kind="drink"] .order-card-add {
+      color: #b8e4dc;
+      background: #28554e;
+    }
+    #order-modal .order-product-card[data-kind="drink"] .order-card-remove {
+      color: #ffd0c5;
+      background: #59302b;
+    }
+    #order-modal .order-product-card[data-kind="drink"]::after {
+      background: #28554e;
+      color: #a9e0d5;
+      border-color: #3d7069;
+    }
+    #order-modal .selected-order-item.is-drink {
+      background: #1d302e;
+      border-color: #3d7069;
+    }
+    #order-modal .selected-order-item.is-drink .line-kind {
+      background: #28554e;
+      border-color: #3d7069;
+      color: #a9e0d5;
+    }
+    #order-modal .selected-order-item.is-drink .line-total {
+      color: #8fd2c6;
+    }
+    #order-modal .selected-order-item.is-drink .quantity-stepper button {
+      background: #25413d;
+      border-color: #3d7069;
+      color: #d8eee9;
+    }
+    #order-modal .selected-order-item.is-drink .quantity-stepper button:not(:disabled) {
+      background: #28554e;
+      border-color: #3d7069;
+      color: #b8e4dc;
+      opacity: 1;
+    }
+    #order-modal .selected-order-item.is-drink .quantity-stepper button:disabled {
+      background: #25413d;
+      border-color: #3d7069;
+      color: #7faaa3;
+      opacity: 1;
+    }
+    #order-modal .selected-order-item.is-drink .quantity-stepper button:not(:disabled):hover {
+      background: #3d7069;
+      border-color: #70b9ad;
+      color: #f0fffb;
+    }
+    #order-modal .selected-order-item.is-drink .remove-order-item {
+      background: #59302b;
+      color: #ffd0c5;
+    }
+  }
+  #order-modal .modal-body { overflow: visible; }
   #order-modal .order-details-content { grid-template-columns: minmax(0, 1fr); }
   #order-modal .order-type-selection { grid-column: 1 / -1; }
   #order-modal .order-sticky-bar { grid-template-columns: minmax(0, 1fr); }
   #order-modal .order-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #order-modal .order-product-card .menu-visual { height: 76px; }
+  #order-modal .selected-order-items { max-height: 34vh; overflow-y: auto; }
+  #order-modal .comanda-title { position: sticky; top: 0; z-index: 4; background: var(--panel); padding-top: 12px; }
+  #order-modal .order-total-box { position: sticky; bottom: 0; z-index: 4; background: var(--panel); padding-bottom: 8px; }
   #order-modal .order-card-name, #order-modal .order-card-price { font-size: 12px; }
   #order-modal .order-category-filters { gap: 2px; }
   #order-modal .order-category-filters button { flex: 1; padding: 8px; font-size: 11px; }
@@ -377,15 +765,89 @@
   #main-sidebar, .login-story { background: #0e120e; }
   .metric-card.highlight { background: #0e120e; }
   .brand-mark { background: radial-gradient(circle at 50% 125%, #4a2c14, #0e120e 62%); }
-  .toast { background: #0e120e; color: var(--panel); border-color: var(--line); }
+  .toast { background: #0e120e; color: var(--ink); border-color: var(--line); }
+  .toast span { color: var(--ink); }
   .modal-backdrop { background: rgb(0 0 0 / 62%); }
   #main-sidebar .nav-item.active { background: var(--coral); }
   /* Hard-coded light surfaces mapped to dark tokens. */
+  #order-modal .modal,
+  #order-modal .modal-body,
+  #order-modal .modal-footer,
+  #order-modal .order-details,
+  #order-modal .order-notes,
+  #order-modal .order-sticky-bar,
+  #order-modal .selected-order-item {
+    background: #202622;
+    color: #f4f1e8;
+    border-color: #3a4740;
+  }
+  #order-modal .order-product-card[data-kind="dish"],
+  #order-modal .order-product-card[data-kind="extra"] {
+    background: #202622;
+    border-color: #3a4740;
+  }
+  #order-modal .order-product-card[data-kind="dish"] .menu-visual,
+  #order-modal .order-product-card[data-kind="extra"] .menu-visual {
+    background: #28312d;
+  }
+  #order-modal .order-product-card[data-kind="drink"] {
+    background: #1d302e;
+    border-color: #3d7069;
+  }
+  #order-modal .order-product-card[data-kind="drink"] .menu-visual {
+    background: #25413d;
+  }
+  #order-modal .order-card-name,
+  #order-modal .modal h2,
+  #order-modal .modal label,
+  #order-modal .order-details > summary,
+  #order-modal .order-notes > summary {
+    color: #f4f1e8;
+  }
+  #order-modal .order-card-price { color: #ff9a86; }
+  #order-modal .order-product-card[data-kind="drink"] .order-card-name,
+  #order-modal .order-product-card[data-kind="drink"] .order-card-price {
+    color: #9bd8ce;
+  }
+  #order-modal .order-product-card[data-kind="drink"] .order-card-add {
+    color: #b8e4dc;
+    background: #28554e;
+  }
+  #order-modal .order-product-card[data-kind="drink"] .order-card-remove {
+    color: #ffd0c5;
+    background: #59302b;
+  }
+  #order-modal .selected-order-item.is-drink {
+    background: #1d302e;
+    border-color: #3d7069;
+  }
+  #order-modal .selected-order-item.is-drink .line-kind {
+    background: #28554e;
+    border-color: #3d7069;
+    color: #a9e0d5;
+  }
+  #order-modal .selected-order-item.is-drink .line-total {
+    color: #8fd2c6;
+  }
   .segmented-control button.active { background: var(--panel); }
   .segmented-control, .menu-tabs { background: #1a201b; }
   .search-field, .modal input, .modal select, .modal textarea, .login-card input, .size-row input, .order-item-row input, .order-item-row select { background: var(--panel); border-color: var(--control-line); color: var(--ink); }
   .client-picker > [data-client-search] { background: var(--panel); color: var(--ink); }
   .order-category-filters button, #order-modal .order-product-card, #order-modal .quantity-stepper button { background: var(--panel); }
+  .modal .delete-button,
+  #order-modal .delete-button,
+  #client-modal .delete-button {
+    background: #4a2424;
+    color: #ffd0c5;
+    border-color: #8a453c;
+  }
+  .modal .delete-button:hover,
+  #order-modal .delete-button:hover,
+  #client-modal .delete-button:hover {
+    background: #63302c;
+    color: #fff1eb;
+    border-color: #d6543a;
+  }
   .modal .drink-color-option { background: var(--panel); }
   #view-menu .menu-actions .edit-button { background: var(--paper-subtle); }
   .customer-menu #view-menu { background: var(--paper); }

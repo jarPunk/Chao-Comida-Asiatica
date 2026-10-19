@@ -1,6 +1,15 @@
 /* CHAO · Clientes — carga, listado, buscador y modal de cliente (antes en app.js) */
 let clientDateFilter = '';
 
+function normalizedClientName(nombres, apellidos) {
+  return `${nombres} ${apellidos}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function findDuplicateClient(nombres, apellidos, currentId = '') {
+  const name = normalizedClientName(nombres, apellidos);
+  return clients.find((client) => String(client.id) !== String(currentId) && normalizedClientName(client.nombres, client.apellidos) === name);
+}
+
 function clientCreatedDay(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -178,12 +187,18 @@ async function deleteClientPermanently(id) {
 document.querySelector('#client-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
-  const payload = { nombres: form.elements.nombres.value.trim(), apellidos: form.elements.apellidos.value.trim(), telefono: form.elements.telefono.value.trim() || null, familia_id: form.elements.familia.value.trim() || null, relacion_familiar: form.elements.relacion_familiar.value.trim() || null, activo: form.elements.activo.checked, updated_at: new Date().toISOString() };
+  const nombres = form.elements.nombres.value.trim();
+  const apellidos = form.elements.apellidos.value.trim();
   const id = form.elements.id.value;
+  const duplicate = findDuplicateClient(nombres, apellidos, id);
+  if (duplicate) {
+    showToast(`Ya existe un cliente registrado como "${duplicate.nombres} ${duplicate.apellidos}".`);
+    return;
+  }
+  const payload = { nombres, apellidos, telefono: form.elements.telefono.value.trim() || null, familia_id: form.elements.familia.value.trim() || null, relacion_familiar: form.elements.relacion_familiar.value.trim() || null, activo: form.elements.activo.checked, updated_at: new Date().toISOString() };
   const response = id ? await supabaseClient.from('clientes').update(payload).eq('id', id) : await supabaseClient.from('clientes').insert(payload);
   if (response.error) { showToast('No se pudo guardar el cliente'); console.error(response.error); return; }
   closeClientModal();
   await loadClients();
   showSuccessConfirmation(id ? '¡Cliente actualizado!' : '¡Cliente registrado!', 'Los datos se guardaron correctamente.', { brief: !id });
 });
-

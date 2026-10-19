@@ -344,10 +344,92 @@
 #view-menu .menu-preparations summary { min-height: 36px; padding: 9px 0; color: #526175; font-size: 12px; }
 #view-menu .menu-preparations summary:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; border-radius: 4px; }
 #view-menu .menu-actions { margin-top: auto; padding-top: 12px; border-top: 0; justify-content: space-between; gap: 10px; }
+#view-menu .menu-actions { position: static; align-self: stretch; }
 #view-menu .menu-actions .edit-button { display: flex; align-items: center; gap: 7px; width: auto; min-height: 40px; height: auto; padding: 8px 12px; font-size: 12px; font-weight: 600; background: #f2f5f9; }
 #view-menu .menu-actions .delete-item-button { width: 40px; height: 40px; background: transparent; border-color: transparent; color: var(--muted); }
 #view-menu .menu-actions .delete-item-button:hover { background: var(--coral-soft); color: var(--coral-dark); }
 .menu-results-bar { padding: 0 2px; }
+
+@media (prefers-color-scheme: dark) {
+  .customer-menu {
+    --customer-bg: #141816;
+    --customer-panel: #202622;
+    --customer-panel-raised: #28312d;
+    --customer-line: #3a4740;
+    --customer-ink: #f4f1e8;
+    --customer-muted: #aeb8ae;
+    --customer-accent: #e8381f;
+    --customer-accent-soft: #3a211d;
+    --customer-gold: #ffcf4d;
+  }
+
+  .customer-menu #view-menu {
+    background: var(--customer-bg);
+    color: var(--customer-ink);
+  }
+
+  .customer-menu .customer-brand strong,
+  .customer-menu #view-menu .page-heading h1,
+  .customer-menu #view-menu .menu-item-card h3,
+  .customer-menu #view-menu .variation-row span {
+    color: var(--customer-ink);
+  }
+
+  .customer-menu .customer-brand div span,
+  .customer-menu #view-menu .heading-subtitle,
+  .customer-menu #view-menu .menu-results-bar,
+  .customer-menu #view-menu .menu-item-card p,
+  .customer-menu #view-menu .menu-availability {
+    color: var(--customer-muted);
+  }
+
+  .customer-menu #view-menu .page-heading {
+    border-color: var(--customer-accent);
+  }
+
+  .customer-menu #view-menu .menu-item-card {
+    background: var(--customer-panel);
+    border-color: var(--customer-line);
+  }
+
+  .customer-menu #view-menu .menu-visual {
+    background: var(--customer-panel-raised);
+  }
+
+  .customer-menu #view-menu .menu-tabs button,
+  .customer-menu #view-menu .menu-search {
+    background: var(--customer-panel);
+    border-color: var(--customer-line);
+    color: var(--customer-muted);
+  }
+
+  .customer-menu #view-menu .menu-tabs button.active {
+    background: var(--customer-accent);
+    border-color: var(--customer-accent);
+    color: #fff;
+  }
+
+  .customer-menu #view-menu .menu-search input {
+    color: var(--customer-ink);
+  }
+
+  .customer-menu #view-menu .menu-category {
+    background: var(--customer-accent-soft);
+    border-color: #713126;
+    color: #ff8a72;
+  }
+
+  .customer-menu #view-menu .menu-category.drink {
+    background: #20362c;
+    border-color: #315c47;
+    color: #91d7aa;
+  }
+
+  .customer-menu #view-menu .variation-row span {
+    color: var(--customer-gold);
+  }
+}
+
 @media (max-width: 640px) {
   .menu-toolbar { flex-wrap: nowrap; align-items: center; gap: 8px; }
   .menu-search { flex-basis: auto; min-width: 0; padding: 0 10px; gap: 7px; }

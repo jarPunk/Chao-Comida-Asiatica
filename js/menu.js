@@ -178,11 +178,15 @@ document.addEventListener('keydown', (event) => {
 
 
 function sizeRowsMarkup(sizes = []) {
-  return sizes.map((size) => `<div class="size-row"><input class="size-name" value="${size.nombre}" placeholder="Tamaño" /><input class="size-price" type="number" min="0" step="0.01" value="${size.precio}" placeholder="Precio" /><button type="button" class="remove-size" aria-label="Quitar tamaño"><i data-lucide="minus"></i></button></div>`).join('');
+  return sizes.map((size) => `<div class="size-row" data-size-id="${menuEscape(size.id || '')}"><input class="size-name" value="${menuEscape(size.nombre)}" placeholder="Tamaño" /><input class="size-price" type="number" min="0" step="0.01" value="${Number(size.precio)}" placeholder="Precio" /><button type="button" class="remove-size" aria-label="Quitar tamaño"><i data-lucide="minus"></i></button></div>`).join('');
 }
 
 function readSizeRows() {
-  return [...document.querySelectorAll('#product-form .size-row')].map((row) => ({ nombre: row.querySelector('.size-name').value.trim(), precio: Number(row.querySelector('.size-price').value) })).filter((size) => size.nombre && size.precio >= 0);
+  return [...document.querySelectorAll('#product-form .size-row')].map((row) => ({
+    id: row.dataset.sizeId || '',
+    nombre: row.querySelector('.size-name').value.trim(),
+    precio: Number(row.querySelector('.size-price').value)
+  })).filter((size) => size.nombre && size.precio >= 0);
 }
 
 function updateProductTypeFields(form) {
@@ -340,8 +344,15 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
       const sizeDelete = await supabaseClient.from('producto_tamanos').delete().eq('producto_id', productId);
       if (sizeDelete.error) { showProductError('Se guardó, pero no se pudieron limpiar sus tamaños. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
     }
+    const existingSizeIds = new Set((products.find((product) => String(product.id) === String(productId))?.producto_tamanos || []).map((size) => String(size.id)));
+    const savedSizeIds = new Set(sizes.filter((size) => size.id).map((size) => String(size.id)));
+    const removedSizeIds = [...existingSizeIds].filter((sizeId) => !savedSizeIds.has(sizeId));
+    if (removedSizeIds.length) {
+      const sizeDelete = await supabaseClient.from('producto_tamanos').delete().in('id', removedSizeIds);
+      if (sizeDelete.error) { showProductError('El producto se guardó, pero no se pudieron eliminar los tamaños retirados. Revisa los permisos RLS.'); console.error(sizeDelete.error); return; }
+    }
     if (sizes.length) {
-      const sizeResponse = await supabaseClient.from('producto_tamanos').upsert(sizes, { onConflict: 'producto_id,nombre' });
+      const sizeResponse = await supabaseClient.from('producto_tamanos').upsert(sizes.map(({ id, ...size }) => id ? { id, ...size } : size));
       if (sizeResponse.error) { showProductError('El producto se guardó, pero Supabase bloqueó sus tamaños. Revisa las políticas RLS de producto_tamanos.'); console.error(sizeResponse.error); return; }
     }
     const variationDelete = await supabaseClient.from('producto_variaciones').delete().eq('producto_id', productId);
@@ -356,4 +367,3 @@ document.querySelector('#product-form').addEventListener('submit', async (event)
   await loadProducts();
   showSuccessConfirmation(id ? '¡Producto actualizado!' : '¡Producto registrado!');
 });
-

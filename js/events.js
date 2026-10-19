@@ -22,6 +22,7 @@ document.addEventListener('click', (event) => {
   if (event.target.closest('.remove-order-item')) {
     event.target.closest('.selected-order-item').remove();
     updateOrderTotal();
+    renderOrderCatalog();
   }
   if (event.target.closest('[data-logout]')) supabaseClient?.auth.signOut();
   const profileButton = event.target.closest('[data-profile-menu]');
@@ -112,4 +113,3 @@ document.addEventListener('input', (event) => {
   const search = event.target.closest('#view-clientes .table-toolbar .search-field input');
   if (search) { renderClients(); return; }
 });
-

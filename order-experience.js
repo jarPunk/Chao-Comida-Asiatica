@@ -40,7 +40,24 @@ function showOrderReading(id) {
   const serviceIcon = isDineIn ? '<path d="M4 10h16M6 10v10m12-10v10M8 10V4h8v6"/>' : '<path d="M5 7h14l1 13H4L5 7Zm4 0V5a3 3 0 0 1 6 0v2"/>';
   const paymentIcon = paid ? '<path d="m7 12 3 3 7-7"/>' : '<path d="M12 7v6m0 3h.01"/>';
   backdrop.querySelector('.reading-status-bar').innerHTML = `<div class="reading-status reading-service"><dt>Tipo de pedido</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true">${serviceIcon}</svg><span>${menuEscape(serviceLabel)}</span></dd></div><div class="reading-status ${paid ? 'reading-paid' : 'reading-unpaid'}"><dt>Estado de pago</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/>${paymentIcon}</svg><span>${paid ? 'Pagado' : 'Sin pagar'}</span></dd></div>`;
-  const lines = order.details?.length ? order.details.map(d => { const productName = d.productos?.nombre || 'Producto'; const product = products.find(item => item.nombre === productName); const size = findOrderSize(product, d); return `<li><strong>${menuEscape(d.cantidad)} × ${menuEscape(productName)}${size?.nombre ? ` · ${menuEscape(size.nombre)}` : ''}</strong>${d.variaciones?.nombre ? `<span>${menuEscape(d.variaciones.nombre)}</span>` : ''}${d.precio_unitario != null ? `<span>Bs ${(Number(d.cantidad) * Number(d.precio_unitario)).toFixed(2)}</span>` : ''}</li>`; }).join('') : `<li>${menuEscape(order.items)}</li>`;
+  const lines = order.details?.length ? (() => {
+    const itemMarkup = (detail) => {
+      const productName = detail.productos?.nombre || 'Producto';
+      const product = products.find(item => item.nombre === productName);
+      const size = findOrderSize(product, detail);
+      const kind = product?.tipo === 'BEBIDA' ? 'drink' : 'dish';
+      return `<li class="reading-item is-${kind}"><strong>${menuEscape(detail.cantidad)} × ${menuEscape(productName)}${size?.nombre ? ` · ${menuEscape(size.nombre)}` : ''}</strong>${detail.variaciones?.nombre ? `<span>${menuEscape(detail.variaciones.nombre)}</span>` : ''}${detail.precio_unitario != null ? `<span class="reading-item-price">Bs ${(Number(detail.cantidad) * Number(detail.precio_unitario)).toFixed(2)}</span>` : ''}</li>`;
+    };
+    const isDrink = (detail) => {
+      const productName = detail.productos?.nombre || '';
+      return products.find(item => item.nombre === productName)?.tipo === 'BEBIDA';
+    };
+    const dishes = order.details.filter(detail => !isDrink(detail)).map(itemMarkup).join('');
+    const drinks = order.details.filter(isDrink).map(itemMarkup).join('');
+    return drinks
+      ? `<li class="reading-items-divider is-dish" role="separator"><span>Platos</span></li>${dishes}<li class="reading-items-divider is-drink" role="separator"><span>Refrescos</span></li>${drinks}`
+      : `<li class="reading-items-divider is-dish" role="separator"><span>Platos</span></li>${dishes}`;
+  })() : `<li>${menuEscape(order.items)}</li>`;
   backdrop.querySelector('.modal-body').innerHTML = `<div class="reading-customer"><strong>${menuEscape(order.customer)}</strong><p>Estado de cocina: <strong>${menuEscape(order.label)}</strong></p></div><ul class="reading-items">${lines}</ul>${order.notes ? `<section class="reading-notes"><h3>Notas</h3><p>${menuEscape(order.notes)}</p></section>` : ''}`;
   backdrop.querySelector('.reading-total strong').textContent = order.total;
   showDialog('order-reading-modal');
@@ -61,7 +78,18 @@ function renderOrderCatalog() {
   if (!grid) return;
   const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'todos';
   const list = products.filter(p => p.activo && !p.menuOnly && (category === 'todos' || (category === 'extras' ? isChickenExtra(p) || p.tipo === 'EXTRA' : category === 'bebidas' ? p.tipo === 'BEBIDA' : p.tipo === 'PLATO' && !isChickenExtra(p))));
-  grid.innerHTML = list.map(p => `<button type="button" class="order-product-card" data-kind="${orderCardKind(p)}" data-order-card="${menuEscape(p.id)}" aria-label="Añadir ${menuEscape(p.nombre)}">${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <span aria-hidden="true">＋</span></span></button>`).join('') || '<p class="catalog-empty">No hay productos disponibles en esta categoría.</p>';
+  const selectedItems = [...document.querySelectorAll('.selected-order-item')];
+  const counts = selectedItems.reduce((result, item) => {
+    const key = String(item.dataset.productId);
+    result[key] = (result[key] || 0) + Number(item.dataset.quantity || 0);
+    return result;
+  }, {});
+  grid.innerHTML = list.map(p => {
+    const count = counts[String(p.id)] || 0;
+    const badge = count ? `<span class="order-card-count" aria-label="${count} en la comanda">${count}</span>` : '';
+    const removeButton = count ? `<button type="button" class="order-card-remove" data-order-remove="${menuEscape(p.id)}" title="Quitar una unidad de ${menuEscape(p.nombre)}" aria-label="Quitar una unidad de ${menuEscape(p.nombre)}">−</button>` : '';
+    return `<article class="order-product-card${count ? ' has-selection' : ''}" data-kind="${orderCardKind(p)}" data-order-card="${menuEscape(p.id)}" tabindex="0" role="button" aria-label="Añadir ${menuEscape(p.nombre)}">${badge}${menuIllustration(p)}<span class="order-card-name">${menuEscape(p.nombre)}</span><span class="order-card-price">${!quantityOnlyProduct(p) && p.producto_tamanos?.length ? 'Desde ' : ''}Bs ${Number(!quantityOnlyProduct(p) && p.producto_tamanos?.length ? Math.min(...p.producto_tamanos.map(s => Number(s.precio))) : p.precio).toFixed(2)} <button type="button" class="order-card-add" aria-label="Añadir ${menuEscape(p.nombre)}">＋</button>${removeButton}</span></article>`;
+  }).join('') || '<p class="catalog-empty">No hay productos disponibles en esta categoría.</p>';
 }
 
 function setupOrderCatalog(field) {
@@ -89,20 +117,35 @@ function enhanceOrderItem(item) {
   const kindLabel = kind === 'drink' ? 'Bebida' : kind === 'extra' ? 'Extra' : 'Plato';
   item.classList.remove('is-drink', 'is-dish', 'is-extra');
   item.classList.add(`is-${kind}`);
-  item.innerHTML = `<span class="selected-order-label"><span class="line-name"></span><span class="line-kind">${kindLabel}</span></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizeOptions}${preparationOptionsMarkup}</div><span class="line-total"></span><button type="button" class="remove-order-item" aria-label="Quitar ${menuEscape(product.nombre)}">×</button>`;
+  item.innerHTML = `<span class="selected-order-label"><span class="line-name"></span><span class="line-kind">${kindLabel}</span></span><div class="quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Reducir cantidad de ${menuEscape(product.nombre)}">−</button><input class="selected-order-quantity" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="4" required value="${quantity}" aria-label="Cantidad de ${menuEscape(product.nombre)}"><button type="button" data-quantity-step="1" aria-label="Aumentar cantidad de ${menuEscape(product.nombre)}">+</button></div><div class="order-line-options">${sizeOptions}${preparationOptionsMarkup}</div><span class="line-total"></span><button type="button" class="remove-order-item" title="Eliminar ${menuEscape(product.nombre)}" aria-label="Eliminar ${menuEscape(product.nombre)}"><i data-lucide="trash-2"></i></button>`;
   updateEditableOrderItem(item);
 }
 
 document.addEventListener('click', event => {
+  const removeCard = event.target.closest('[data-order-remove]');
+  if (removeCard) {
+    const item = [...document.querySelectorAll('.selected-order-item')].find(entry => String(entry.dataset.productId) === String(removeCard.dataset.orderRemove));
+    if (item) {
+      const input = item.querySelector('.selected-order-quantity');
+      if (Number(input?.value || item.dataset.quantity) <= 1) item.remove();
+      else {
+        input.value = orderQuantity(Number(input.value) - 1);
+        updateEditableOrderItem(item);
+      }
+      updateOrderTotal();
+      renderOrderCatalog();
+    }
+    return;
+  }
   const card = event.target.closest('[data-order-card]');
   if (card) {
+    if (event.target.closest('[data-order-remove]')) return;
     const select = document.querySelector('.order-product');
     select.value = card.dataset.orderCard;
     select.dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector('.order-quantity').value = '1';
     addSelectedOrderItem();
     showOrderError('');
-    document.querySelector('.order-details').open = false;
     showToast('Producto añadido a la comanda');
   }
   const category = event.target.closest('[data-order-category]');
@@ -159,6 +202,8 @@ document.addEventListener('submit', async event => {
     if (!nombre) throw new Error('Escribe el nombre del cliente.');
     const apellidos = form.elements.apellidos.value.trim();
     if (!apellidos) throw new Error('Escribe los apellidos del cliente.');
+    const duplicate = typeof findDuplicateClient === 'function' ? findDuplicateClient(nombre, apellidos) : null;
+    if (duplicate) throw new Error(`Ya existe un cliente registrado como "${duplicate.nombres} ${duplicate.apellidos}".`);
     const payload = { nombres: nombre, apellidos, telefono: form.elements.telefono.value.trim() || null, activo: true };
     const response = await supabaseClient.from('clientes').insert(payload).select('id, nombres, apellidos, telefono, activo').single();
     if (response.error) throw new Error('No se pudo guardar el cliente. Revisa tu conexión y permisos e intenta otra vez.');
