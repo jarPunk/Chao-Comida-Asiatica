@@ -133,6 +133,17 @@ function addSelectedOrderItem() {
     ? preparationOptions(product)[0]
     : variations.find((item) => String(item.id) === preparationSelect.value || item.nombre === preparationSelect.options[preparationSelect.selectedIndex]?.textContent) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
   const quantity = Number(document.querySelector('.order-quantity').value) || 1;
+  if (product.tipo === 'BEBIDA') {
+    const existingItem = [...document.querySelectorAll('.selected-order-item')]
+      .find((item) => String(item.dataset.productId) === String(product.id));
+    if (existingItem) {
+      const quantityInput = existingItem.querySelector('.selected-order-quantity');
+      quantityInput.value = orderQuantity(Number(quantityInput.value) + quantity);
+      updateEditableOrderItem(existingItem);
+      renderOrderCatalog();
+      return;
+    }
+  }
   const item = document.createElement('div');
   item.className = 'selected-order-item';
   item.dataset.productId = product.id;

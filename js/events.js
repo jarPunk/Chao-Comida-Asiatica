@@ -19,10 +19,17 @@ document.addEventListener('click', (event) => {
   }
   if (event.target.closest('.remove-size')) event.target.closest('.size-row').remove();
   if (event.target.closest('.add-order-item')) addSelectedOrderItem();
-  if (event.target.closest('.remove-order-item')) {
-    event.target.closest('.selected-order-item').remove();
-    updateOrderTotal();
-    renderOrderCatalog();
+  const removeOrderItem = event.target.closest('.remove-order-item');
+  if (removeOrderItem) {
+    const item = removeOrderItem.closest('.selected-order-item');
+    if (item) {
+      item.classList.add('is-removing');
+      window.setTimeout(() => {
+        item.remove();
+        updateOrderTotal();
+        renderOrderCatalog();
+      }, 180);
+    }
   }
   if (event.target.closest('[data-logout]')) supabaseClient?.auth.signOut();
   const profileButton = event.target.closest('[data-profile-menu]');
