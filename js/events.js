@@ -1,4 +1,36 @@
 /* CHAO · Eventos globales delegados (click/change/input) (antes en app.js) */
+let pendingOrderRemoval = null;
+
+function showUndoRemoval(item, nextSibling) {
+  const toast = document.querySelector('#toast');
+  const action = toast?.querySelector('.toast-action');
+  if (!toast || !action) return;
+  if (pendingOrderRemoval) window.clearTimeout(pendingOrderRemoval.timer);
+  action.hidden = false;
+  toast.querySelector('span').textContent = 'Producto eliminado';
+  toast.classList.add('show');
+  const timer = window.setTimeout(() => {
+    action.hidden = true;
+    if (toast.querySelector('span')) toast.querySelector('span').textContent = 'Pedido actualizado';
+    toast.classList.remove('show');
+    pendingOrderRemoval = null;
+  }, 3500);
+  pendingOrderRemoval = { item, nextSibling, timer };
+  action.onclick = () => {
+    window.clearTimeout(timer);
+    if (nextSibling?.parentNode) nextSibling.parentNode.insertBefore(item, nextSibling);
+    else document.querySelector('.selected-order-items')?.append(item);
+    item.classList.remove('is-removing');
+    action.hidden = true;
+    toast.classList.remove('show');
+    pendingOrderRemoval = null;
+    refreshIcons();
+    updateOrderTotal();
+    renderOrderCatalog();
+    showToast('Producto restaurado');
+  };
+}
+
 document.addEventListener('click', (event) => {
   const nav = event.target.closest('[data-view], [data-view-link]');
   if (nav) switchView(nav.dataset.view || nav.dataset.viewLink);
@@ -23,12 +55,14 @@ document.addEventListener('click', (event) => {
   if (removeOrderItem) {
     const item = removeOrderItem.closest('.selected-order-item');
     if (item) {
+      const nextSibling = item.nextElementSibling;
       item.classList.add('is-removing');
       window.setTimeout(() => {
         item.remove();
         updateOrderTotal();
         renderOrderCatalog();
       }, 180);
+      showUndoRemoval(item, nextSibling);
     }
   }
   if (event.target.closest('[data-logout]')) supabaseClient?.auth.signOut();

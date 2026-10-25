@@ -133,16 +133,20 @@ function addSelectedOrderItem() {
     ? preparationOptions(product)[0]
     : variations.find((item) => String(item.id) === preparationSelect.value || item.nombre === preparationSelect.options[preparationSelect.selectedIndex]?.textContent) || { id: null, nombre: preparationSelect.options[preparationSelect.selectedIndex]?.textContent || '' };
   const quantity = Number(document.querySelector('.order-quantity').value) || 1;
-  if (product.tipo === 'BEBIDA') {
-    const existingItem = [...document.querySelectorAll('.selected-order-item')]
-      .find((item) => String(item.dataset.productId) === String(product.id));
-    if (existingItem) {
-      const quantityInput = existingItem.querySelector('.selected-order-quantity');
-      quantityInput.value = orderQuantity(Number(quantityInput.value) + quantity);
-      updateEditableOrderItem(existingItem);
-      renderOrderCatalog();
-      return;
-    }
+  const existingItem = [...document.querySelectorAll('.selected-order-item')].find((item) => (
+    String(item.dataset.productId) === String(product.id)
+    && String(item.dataset.sizeId || '') === String(size?.id || '')
+    && String(item.dataset.variationId || '') === String(quantityOnlyProduct(product) ? '' : preparation?.id || '')
+  ));
+  if (existingItem) {
+    const quantityInput = existingItem.querySelector('.selected-order-quantity');
+    quantityInput.value = orderQuantity(Number(quantityInput.value) + quantity);
+    updateEditableOrderItem(existingItem);
+    existingItem.classList.add('quantity-updated');
+    window.setTimeout(() => existingItem.classList.remove('quantity-updated'), 320);
+    renderOrderCatalog();
+    showToast('Cantidad actualizada');
+    return;
   }
   const item = document.createElement('div');
   item.className = 'selected-order-item';
@@ -177,7 +181,14 @@ function updateOrderTotal() {
   const totalElement = document.querySelector('.order-total-box strong');
   if (!totalElement) return;
   const total = [...document.querySelectorAll('.selected-order-item')].reduce((sum, item) => sum + Number(item.dataset.quantity) * Number(item.dataset.price), 0);
-  totalElement.textContent = `Bs ${total.toFixed(2)}`;
+  const nextTotal = `Bs ${total.toFixed(2)}`;
+  if (totalElement.textContent !== nextTotal) {
+    totalElement.textContent = nextTotal;
+    totalElement.classList.remove('total-updated');
+    void totalElement.offsetWidth;
+    totalElement.classList.add('total-updated');
+  }
+  totalElement.closest('.order-total-box')?.setAttribute('aria-label', `Total del pedido: ${nextTotal}`);
 }
 
 function updateEditableOrderItem(item) {
@@ -359,6 +370,10 @@ function openModal() {
   setupClientSearch();
   addOrderBuilder(form);
   form.reset();
+  const takeout = document.querySelector('#order-modal input[name="tipo_pedido"][value="Para llevar"]');
+  if (takeout) takeout.checked = true;
+  const paidToggle = document.querySelector('#order-modal .payment-check input[name="pagado"]');
+  if (paidToggle) paidToggle.checked = false;
   form.elements.id.value = '';
   const clientPicker = form.querySelector('[data-client-picker]');
   if (clientPicker) {
@@ -371,11 +386,9 @@ function openModal() {
   renderOrderCatalog();
   updateOrderTotal();
   const titleEl = document.querySelector('#order-modal-title');
-  const eyebrowEl = document.querySelector('#order-modal-eyebrow');
   const submitBtn = document.querySelector('#save-order-submit');
   const deleteBtn = form.querySelector('[data-delete-order]');
   if (titleEl) titleEl.textContent = 'Registrar pedido';
-  if (eyebrowEl) eyebrowEl.textContent = 'Nuevo ticket';
   if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Crear pedido';
   if (deleteBtn) deleteBtn.hidden = true;
   refreshIcons();
@@ -429,13 +442,11 @@ async function openEditOrderModal(databaseId) {
   form.elements.id.value = databaseId;
 
   const titleEl = document.querySelector('#order-modal-title');
-  const eyebrowEl = document.querySelector('#order-modal-eyebrow');
   const submitBtn = document.querySelector('#save-order-submit');
   const deleteBtn = form.querySelector('[data-delete-order]');
 
   const ticketNumber = orderRaw?.numero_ticket || localOrder?.id || databaseId;
   if (titleEl) titleEl.textContent = `Editar pedido #${String(ticketNumber).padStart(6, '0')}`;
-  if (eyebrowEl) eyebrowEl.textContent = 'Modificación de ticket';
   if (submitBtn) submitBtn.innerHTML = '<i data-lucide="check"></i>Guardar cambios';
   if (deleteBtn) deleteBtn.hidden = false;
 

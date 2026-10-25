@@ -3,16 +3,18 @@ function setupOrderTypeSelection() {
   if (!select) return;
   const fieldset = document.createElement('fieldset');
   fieldset.className = 'order-type-selection';
-  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option"><input type="radio" name="tipo_pedido" value="Para llevar" checked><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option"><input type="radio" name="tipo_pedido" value="En mesa"><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
+  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option"><input type="radio" name="tipo_pedido" form="order-form" value="Para llevar" checked><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option"><input type="radio" name="tipo_pedido" form="order-form" value="En mesa"><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
   select.closest('label').replaceWith(fieldset);
   const form = document.querySelector('#order-form');
-  const details = form.querySelector('.order-details');
   const paid = form.querySelector('.payment-check');
-  if (!details || !paid || form.querySelector('.order-sticky-bar')) return;
+  const header = document.querySelector('#order-modal .modal-header');
+  const footer = form.querySelector('.modal-footer');
+  if (!paid || !header || !footer || form.querySelector('.order-sticky-bar')) return;
   const bar = document.createElement('div');
   bar.className = 'order-sticky-bar';
-  details.before(bar);
+  header.append(bar);
   bar.append(fieldset, paid);
+  paid.querySelector('input').setAttribute('form', 'order-form');
 }
 
 setupOrderTypeSelection();
@@ -76,8 +78,8 @@ function orderCardKind(p) {
 function renderOrderCatalog() {
   const grid = document.querySelector('.order-catalog-grid');
   if (!grid) return;
-  const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'todos';
-  const list = products.filter(p => p.activo && !p.menuOnly && (category === 'todos' || (category === 'extras' ? isChickenExtra(p) || p.tipo === 'EXTRA' : category === 'bebidas' ? p.tipo === 'BEBIDA' : p.tipo === 'PLATO' && !isChickenExtra(p))));
+  const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'platos';
+  const list = products.filter(p => p.activo && !p.menuOnly && (category === 'bebidas' ? p.tipo === 'BEBIDA' : category === 'extras' ? p.tipo === 'EXTRA' || isChickenExtra(p) : p.tipo === 'PLATO' && !isChickenExtra(p)));
   const selectedItems = [...document.querySelectorAll('.selected-order-item')];
   const counts = selectedItems.reduce((result, item) => {
     const key = String(item.dataset.productId);
@@ -93,7 +95,7 @@ function renderOrderCatalog() {
 }
 
 function setupOrderCatalog(field) {
-  field.insertAdjacentHTML('afterbegin', '<div class="order-catalog"><div class="order-category-filters" role="group" aria-label="Categorías">'+[['todos','Todos'],['platos','Platos'],['bebidas','Bebidas'],['extras','Extras']].map(([key,label])=>`<button type="button" data-order-category="${key}" class="${key==='todos'?'active':''}" aria-pressed="${key==='todos'}">${label}</button>`).join('')+'</div><div class="order-catalog-grid"></div><p class="order-catalog-hint">Toca un producto para añadirlo. Ajusta sus opciones en la comanda.</p></div><h3 class="comanda-title">Tu comanda</h3>');
+  field.insertAdjacentHTML('afterbegin', '<div class="order-catalog"><div class="order-category-filters" role="group" aria-label="Categorías">'+[['platos','Platos'],['bebidas','Bebidas'],['extras','Extras']].map(([key,label])=>`<button type="button" data-order-category="${key}" class="${key==='platos'?'active':''}" aria-pressed="${key==='platos'}">${label}</button>`).join('')+'</div><div class="order-catalog-grid" aria-live="polite"></div><p class="order-catalog-hint">Elige un plato, bebida o extra. Ajusta sus opciones en la comanda.</p></div><h3 class="comanda-title">Tu comanda</h3>');
   field.querySelector('.order-item-row').hidden = true;
   renderOrderCatalog();
 }
