@@ -16,6 +16,26 @@ function readMenuOrder() {
   }
 }
 
+async function saveMenuOrder() {
+  updateMenuOrderFromGrid();
+  localStorage.setItem(menuOrderStorageKey, JSON.stringify(menuOrder));
+  if (!supabaseClient || !isAuthenticated) {
+    showToast('Orden guardado en este dispositivo');
+    return true;
+  }
+  const rows = Object.entries(menuOrder)
+    .filter(([type, ids]) => ['PLATO', 'BEBIDA'].includes(type) && Array.isArray(ids))
+    .map(([type, ids]) => ({ tipo: type, productos: ids.map(String), updated_at: new Date().toISOString() }));
+  const response = await supabaseClient.from('menu_order').upsert(rows, { onConflict: 'tipo' });
+  if (response.error) {
+    console.error(response.error);
+    showToast('No se pudo guardar el orden en Supabase');
+    return false;
+  }
+  showToast('Orden del menú guardado');
+  return true;
+}
+
 function productOrderKey(product) {
   if (product.tipo === 'BEBIDA') return 'BEBIDA';
   if (product.tipo === 'PLATO' && !isChickenExtra(product)) return 'PLATO';
@@ -298,11 +318,11 @@ document.querySelector('#view-menu')?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('#save-menu-order')) {
-    updateMenuOrderFromGrid();
-    localStorage.setItem(menuOrderStorageKey, JSON.stringify(menuOrder));
-    setMenuOrderEditing(false);
-    showToast('Orden del menú guardado');
-    renderProducts();
+    saveMenuOrder().then((saved) => {
+      if (!saved) return;
+      setMenuOrderEditing(false);
+      renderProducts();
+    });
     return;
   }
   const layout = event.target.closest('[data-menu-layout]');
@@ -396,10 +416,11 @@ function syncGyozaProductFields(form) {
 async function loadProducts() {
   if (!supabaseClient || !isAuthenticated) return;
   try {
-    const [prodRes, varRes, catRes] = await Promise.all([
+    const [prodRes, varRes, catRes, orderRes] = await Promise.all([
       supabaseClient.from('productos').select('id, nombre, descripcion, precio, tipo, activo, producto_tamanos(id, nombre, precio, activo)').order('nombre'),
       supabaseClient.from('producto_variaciones').select('producto_id, variacion_id, variaciones(id, nombre)'),
-      supabaseClient.from('variaciones').select('id, nombre').eq('activa', true).order('id')
+      supabaseClient.from('variaciones').select('id, nombre').eq('activa', true).order('id'),
+      supabaseClient.from('menu_order').select('tipo, productos')
     ]);
 
     if (prodRes.error) throw prodRes.error;
@@ -412,6 +433,17 @@ async function loadProducts() {
     variations = catRes.data || [];
     if (!variations.length && !varRes.error && varRes.data) {
       variations = varRes.data.map((item) => item.variaciones).filter(Boolean).filter((v, i, list) => list.findIndex((x) => x.id === v.id) === i);
+    }
+    if (orderRes.error) {
+      console.error(orderRes.error);
+      showToast('No se pudo cargar el orden guardado');
+    } else {
+      const remoteOrder = {};
+      (orderRes.data || []).forEach((row) => {
+        if (Array.isArray(row.productos)) remoteOrder[row.tipo] = row.productos.map(String);
+      });
+      menuOrder = { ...menuOrder, ...remoteOrder };
+      localStorage.setItem(menuOrderStorageKey, JSON.stringify(menuOrder));
     }
   } catch (err) {
     console.error(err);
