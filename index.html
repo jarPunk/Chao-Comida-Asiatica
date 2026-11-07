@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f3ed" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f2e9" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141816" />
   <title>Chao · Comida Asiática</title>
   <script>
     (() => {
+      const savedTheme = localStorage.getItem('chao-theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
       const validViews = ['inicio', 'pedidos', 'clientes', 'menu', 'estadisticas'];
       const view = location.hash.slice(1);
       if (!validViews.includes(view) || view === 'inicio') return;
@@ -17,8 +19,8 @@
       style.textContent = `
         html[data-initial-view="${view}"] #view-inicio { display: none !important; }
         html[data-initial-view="${view}"] #view-${view} { display: block !important; }
-        html[data-initial-view="${view}"] .nav-item[data-view="inicio"] { background: transparent !important; color: #475569 !important; font-weight: 600 !important; box-shadow: none !important; border-color: transparent !important; }
-        html[data-initial-view="${view}"] .nav-item[data-view="${view}"] { background: #fff1f2 !important; color: var(--coral) !important; font-weight: 800 !important; box-shadow: inset 4px 0 0 var(--coral) !important; border: 1px solid rgba(217, 27, 36, 0.12) !important; }
+        html[data-initial-view="${view}"] .nav-item[data-view="inicio"] { background: transparent !important; color: #d2d8ca !important; font-weight: 600 !important; box-shadow: none !important; border-color: transparent !important; }
+        html[data-initial-view="${view}"] .nav-item[data-view="${view}"] { background: var(--coral) !important; color: #fffdf8 !important; font-weight: 800 !important; box-shadow: none !important; border: 1px solid var(--coral) !important; }
       `;
       document.head.appendChild(style);
     })();
@@ -39,6 +41,8 @@
   <link rel="stylesheet" href="order-experience.css" />
   <link rel="stylesheet" href="chao-ui.css" />
   <link rel="stylesheet" href="chao-operations.css" />
+  <link rel="stylesheet" href="dark-mode.css" />
+  <link rel="stylesheet" href="menu-order.css" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js" defer onload="window.refreshIcons&&window.refreshIcons()"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -70,7 +74,7 @@
         <button class="nav-item" data-view="estadisticas"><i data-lucide="chart-no-axes-combined"></i><span>Estadísticas</span></button>
       </nav>
       <div class="sidebar-bottom">
-        <div class="user-card"><span class="avatar">AM</span><div><strong>Administrador</strong><span>Sesión activa</span></div><i data-lucide="ellipsis"></i></div>
+        <div class="user-card"><span class="avatar">AM</span><div><strong>Administrador</strong><span>Sesión activa</span></div><i data-lucide="more-horizontal"></i></div>
       </div>
     </aside>
 
@@ -80,6 +84,7 @@
         <button type="button" class="icon-button sidebar-toggle" data-sidebar-toggle aria-controls="main-sidebar" aria-expanded="true" aria-label="Plegar barra lateral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16m4-12h4m-4 4h4m-4 4h4"/></svg></button>
         <div class="mobile-brand"><span class="brand-mark">C</span><strong>CHAO</strong></div>
         <div class="page-location"><span>CHAO</span><span aria-hidden="true">/</span><strong id="current-view-label">Inicio</strong></div><div class="topbar-actions">
+          <button type="button" class="icon-button theme-toggle" data-theme-toggle aria-label="Activar modo oscuro" title="Activar modo oscuro"><i data-lucide="moon"></i></button>
           <div class="profile-menu"><button class="profile-chip" data-profile-menu aria-expanded="false"><span class="avatar">AM</span><span>Admin</span><i data-lucide="chevron-down"></i></button><div class="account-dropdown" hidden><strong>Administrador</strong><span>Sesión activa</span><button type="button" data-logout><i data-lucide="log-out"></i>Cerrar sesión</button></div></div>
         </div>
       </header>
@@ -107,7 +112,7 @@
 
       <section class="page-view" id="view-menu">
         <div class="customer-brand"><span class="brand-mark">C</span><div><strong>CHAO</strong><span>Comida asiática</span></div></div>
-        <div class="page-heading compact"><div><p class="eyebrow">Hecho para disfrutar</p><h1>La carta</h1><p class="heading-subtitle">Arroz al wok, fideos y algo fresco para acompañar.</p></div><div class="menu-heading-actions"><button class="secondary-button" id="show-customer-menu" aria-pressed="false"><i data-lucide="eye"></i><span>Mostrar menú</span></button><button class="primary-button"><i data-lucide="plus"></i>Nuevo producto</button></div></div>
+        <div class="page-heading compact"><div><p class="eyebrow">Hecho para disfrutar</p><h1>La carta</h1><p class="heading-subtitle">Arroz al wok, fideos y algo fresco para acompañar.</p></div><div class="menu-heading-actions"><button class="secondary-button" id="show-customer-menu" aria-pressed="false"><i data-lucide="eye"></i><span>Mostrar menú</span></button><button class="secondary-button" id="toggle-menu-order" aria-pressed="false"><i data-lucide="grip-vertical"></i><span>Organizar orden</span></button><button class="primary-button" id="save-menu-order" hidden><i data-lucide="check"></i><span>Guardar orden</span></button><button class="primary-button"><i data-lucide="plus"></i>Nuevo producto</button></div></div>
         <div class="menu-toolbar"><label class="menu-search"><i data-lucide="search" aria-hidden="true"></i><input type="search" id="menu-search" placeholder="Buscar en la carta" aria-label="Buscar en el menú" /></label><div class="menu-layout" role="group" aria-label="Presentación del menú"><button type="button" data-menu-layout="cards" aria-pressed="true"><i data-lucide="layout-grid"></i>Tarjetas</button><button type="button" data-menu-layout="list" aria-pressed="false"><i data-lucide="list"></i>Lista</button></div></div>
         <div class="menu-tabs" aria-label="Categorías del menú"><button class="active">Todos <b>0</b></button><button>Platos <b>0</b></button><button>Bebidas <b>0</b></button><button>Variaciones</button><button>Extras</button></div>
         <div class="menu-results-bar"><p id="menu-result-count" role="status" aria-live="polite"></p><span>Precios en bolivianos · Ilustraciones de referencia</span></div>

@@ -1,4 +1,115 @@
 /* CHAO · Menú — productos, tamaños, variaciones, ilustraciones y modal de producto (antes en app.js) */
+const menuOrderStorageKey = 'chao-menu-order';
+let menuOrder = readMenuOrder();
+let menuOrderEditing = false;
+let draggedMenuProductId = '';
+let menuDragScrollFrame = 0;
+let menuDragScrollDirection = 0;
+
+function readMenuOrder() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(menuOrderStorageKey) || '{}');
+    return stored && typeof stored === 'object' ? stored : {};
+  } catch (error) {
+    console.warn('No se pudo leer el orden guardado del menú', error);
+    return {};
+  }
+}
+
+function productOrderKey(product) {
+  if (product.tipo === 'BEBIDA') return 'BEBIDA';
+  if (product.tipo === 'PLATO' && !isChickenExtra(product)) return 'PLATO';
+  return '';
+}
+
+function sortProductsBySavedOrder(list) {
+  const positions = new Map();
+  Object.entries(menuOrder).forEach(([type, ids]) => {
+    if (Array.isArray(ids)) ids.forEach((id, index) => positions.set(`${type}:${id}`, index));
+  });
+  return [...list].sort((a, b) => {
+    const typeA = productOrderKey(a);
+    const typeB = productOrderKey(b);
+    if (typeA !== typeB) return 0;
+    const positionA = positions.get(`${typeA}:${a.id}`);
+    const positionB = positions.get(`${typeB}:${b.id}`);
+    if (positionA === undefined && positionB === undefined) return 0;
+    if (positionA === undefined) return 1;
+    if (positionB === undefined) return -1;
+    return positionA - positionB;
+  });
+}
+
+function updateMenuOrderFromGrid() {
+  const cards = [...document.querySelectorAll('#view-menu .menu-item-card[data-product-id]')];
+  const visibleIdsByType = {};
+  cards.forEach((card) => {
+    const product = products.find((item) => String(item.id) === card.dataset.productId);
+    const type = product && productOrderKey(product);
+    if (type) (visibleIdsByType[type] ||= []).push(card.dataset.productId);
+  });
+  Object.entries(visibleIdsByType).forEach(([type, ids]) => {
+    const existing = Array.isArray(menuOrder[type]) ? menuOrder[type] : [];
+    menuOrder[type] = [...ids, ...existing.filter((id) => !ids.includes(id))];
+  });
+}
+
+function stopMenuDragScroll() {
+  if (menuDragScrollFrame) cancelAnimationFrame(menuDragScrollFrame);
+  menuDragScrollFrame = 0;
+  menuDragScrollDirection = 0;
+  document.querySelector('#view-menu')?.classList.remove('dragging-near-top', 'dragging-near-bottom');
+}
+
+function runMenuDragScroll() {
+  if (!menuDragScrollDirection || !draggedMenuProductId) {
+    menuDragScrollFrame = 0;
+    return;
+  }
+  window.scrollBy(0, menuDragScrollDirection * 12);
+  menuDragScrollFrame = requestAnimationFrame(runMenuDragScroll);
+}
+
+function updateMenuDragScroll(clientY) {
+  const edgeSize = 110;
+  const height = window.innerHeight;
+  const direction = clientY < edgeSize ? -1 : clientY > height - edgeSize ? 1 : 0;
+  menuDragScrollDirection = direction;
+  const view = document.querySelector('#view-menu');
+  view?.classList.toggle('dragging-near-top', direction < 0);
+  view?.classList.toggle('dragging-near-bottom', direction > 0);
+  if (direction && !menuDragScrollFrame) menuDragScrollFrame = requestAnimationFrame(runMenuDragScroll);
+  if (!direction && menuDragScrollFrame) {
+    cancelAnimationFrame(menuDragScrollFrame);
+    menuDragScrollFrame = 0;
+  }
+}
+
+function setMenuOrderEditing(active) {
+  menuOrderEditing = active;
+  const view = document.querySelector('#view-menu');
+  const toggle = document.querySelector('#toggle-menu-order');
+  const save = document.querySelector('#save-menu-order');
+  view?.classList.toggle('is-order-editing', active);
+  toggle?.setAttribute('aria-pressed', String(active));
+  if (toggle) toggle.querySelector('span').textContent = active ? 'Terminar organización' : 'Organizar orden';
+  if (save) save.hidden = !active;
+  document.querySelectorAll('#view-menu .menu-item-card[data-product-id]').forEach((card) => {
+    card.draggable = active;
+    let controls = card.querySelector('.menu-order-controls');
+    if (active && !controls) {
+      controls = document.createElement('div');
+      controls.className = 'menu-order-controls';
+      controls.innerHTML = `<span>Orden</span><button type="button" data-order-move="up" data-order-id="${card.dataset.productId}" aria-label="Subir ${card.querySelector('h3')?.textContent || 'producto'}" title="Subir"><i data-lucide="arrow-up"></i></button><button type="button" data-order-move="down" data-order-id="${card.dataset.productId}" aria-label="Bajar ${card.querySelector('h3')?.textContent || 'producto'}" title="Bajar"><i data-lucide="arrow-down"></i></button>`;
+      card.append(controls);
+    } else if (!active) {
+      controls?.remove();
+    }
+
+  });
+  if (active) refreshIcons();
+}
+
 function preparationNames(product) {
   if (isGyozaProduct(product)) return [];
   const saved = product.producto_variaciones?.map((item) => item.variaciones?.nombre).filter(Boolean) || [];
@@ -84,7 +195,7 @@ function productMarkup(product) {
     const slug = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
     return `<span class="prep-badge prep-${menuEscape(slug)}">${menuEscape(p)}</span>`;
   }).join('') || '<span class="prep-badge">Sin preparación definida</span>';
-  return `<article class="menu-item-card ${product.activo ? '' : 'unavailable'}">${illustration}<div class="menu-card-content"><div class="menu-card-meta"><span class="menu-category ${isDrink ? 'drink' : ''}">${isDrink ? 'Bebida' : isExtra ? 'Extra' : 'Plato'}</span><span class="menu-availability">${product.activo ? 'Disponible' : 'No disponible'}</span></div><h3>${product.nombre}</h3><div class="variation-row">${sizeMarkup}</div>${product.descripcion ? `<p>${product.descripcion}</p>` : ''}${serving ? `<p class="serving-note">${serving}</p>` : ''}${!isDrink && !isExtra && preparations.length ? (preparations.length > 1 ? `<details class="menu-preparations"><summary>${preparations.length} preparaciones disponibles</summary><div class="preparation-list">${prepMarkup}</div></details>` : `<div class="preparation-list">${prepMarkup}</div>`) : ''}<div class="menu-actions" ${product.menuOnly ? 'hidden' : ''}><button class="edit-button" data-edit-product="${product.id}" title="Editar ${product.nombre}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i><span>Editar</span></button><button class="delete-item-button" data-delete-product="${product.id}" title="Eliminar ${product.nombre}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></div></article>`;
+  return `<article class="menu-item-card ${product.activo ? '' : 'unavailable'}" data-product-id="${product.menuOnly ? '' : product.id}" draggable="false">${illustration}<div class="menu-card-content"><div class="menu-card-meta"><span class="menu-category ${isDrink ? 'drink' : ''}">${isDrink ? 'Bebida' : isExtra ? 'Extra' : 'Plato'}</span><span class="menu-availability">${product.activo ? 'Disponible' : 'No disponible'}</span></div><h3>${product.nombre}</h3><div class="variation-row">${sizeMarkup}</div>${product.descripcion ? `<p>${product.descripcion}</p>` : ''}${serving ? `<p class="serving-note">${serving}</p>` : ''}${!isDrink && !isExtra && preparations.length ? (preparations.length > 1 ? `<details class="menu-preparations"><summary>${preparations.length} preparaciones disponibles</summary><div class="preparation-list">${prepMarkup}</div></details>` : `<div class="preparation-list">${prepMarkup}</div>`) : ''}<div class="menu-actions" ${product.menuOnly ? 'hidden' : ''}><button class="edit-button" data-edit-product="${product.id}" title="Editar ${product.nombre}" aria-label="Editar ${product.nombre}"><i data-lucide="pencil"></i><span>Editar</span></button><button class="delete-item-button" data-delete-product="${product.id}" title="Eliminar ${product.nombre}" aria-label="Eliminar ${product.nombre}"><i data-lucide="trash-2"></i></button></div></div></article>`;
 }
 
 function renderProducts() {
@@ -96,15 +207,16 @@ function renderProducts() {
   if (!products.some(isChickenExtra)) menuProducts.push(chickenExtra);
   const visibleProducts = isCustomer ? menuProducts.filter((product) => product.activo) : menuProducts;
   renderMenuTabs(visibleProducts, isCustomer);
-  const filteredProducts = visibleProducts.filter((product) => {
+  const filteredProducts = sortProductsBySavedOrder(visibleProducts.filter((product) => {
     if (menuSearch && !normalizeMenuText(`${product.nombre} ${product.descripcion || ''}`).includes(normalizeMenuText(menuSearch))) return false;
     if (menuFilter === 'variaciones') return product.tipo === 'PLATO' && !isChickenExtra(product) && preparationNames(product).length > 1;
     if (menuFilter.startsWith('c:')) return customerFolderOf(product) === menuFilter.slice(2);
     return true;
-  });
+  }));
   const count = document.querySelector('#menu-result-count');
   if (count) count.textContent = `${filteredProducts.length} ${filteredProducts.length === 1 ? 'producto' : 'productos'}`;
   grid.innerHTML = filteredProducts.length ? filteredProducts.map(productMarkup).join('') : '<div class="empty-state"><i data-lucide="search"></i><strong>No encontramos productos</strong><span>Prueba con otro nombre o categoría.</span><button type="button" class="secondary-button" data-reset-menu>Ver toda la carta</button></div>';
+  setMenuOrderEditing(menuOrderEditing);
   refreshIcons();
 }
 
@@ -159,6 +271,40 @@ document.querySelector('#menu-search')?.addEventListener('input', (event) => {
   renderProducts();
 });
 document.querySelector('#view-menu')?.addEventListener('click', (event) => {
+  const moveButton = event.target.closest('[data-order-move]');
+  if (moveButton && menuOrderEditing) {
+    event.preventDefault();
+    event.stopPropagation();
+    updateMenuOrderFromGrid();
+    const card = moveButton.closest('.menu-item-card[data-product-id]');
+    const product = products.find((item) => String(item.id) === card?.dataset.productId);
+    const type = product && productOrderKey(product);
+    const cardsOfType = [...document.querySelectorAll('#view-menu .menu-item-card[data-product-id]')].filter((item) => {
+      const itemProduct = products.find((productItem) => String(productItem.id) === item.dataset.productId);
+      return itemProduct && productOrderKey(itemProduct) === type;
+    });
+    const currentIndex = cardsOfType.indexOf(card);
+    const targetIndex = currentIndex + (moveButton.dataset.orderMove === 'up' ? -1 : 1);
+    if (type && currentIndex >= 0 && targetIndex >= 0 && targetIndex < cardsOfType.length) {
+      const ids = cardsOfType.map((item) => item.dataset.productId);
+      [ids[currentIndex], ids[targetIndex]] = [ids[targetIndex], ids[currentIndex]];
+      menuOrder[type] = [...ids, ...menuOrder[type].filter((id) => !ids.includes(id))];
+      renderProducts();
+    }
+    return;
+  }
+  if (event.target.closest('#toggle-menu-order')) {
+    setMenuOrderEditing(!menuOrderEditing);
+    return;
+  }
+  if (event.target.closest('#save-menu-order')) {
+    updateMenuOrderFromGrid();
+    localStorage.setItem(menuOrderStorageKey, JSON.stringify(menuOrder));
+    setMenuOrderEditing(false);
+    showToast('Orden del menú guardado');
+    renderProducts();
+    return;
+  }
   const layout = event.target.closest('[data-menu-layout]');
   if (layout) {
     document.querySelector('#view-menu').classList.toggle('menu-list-view', layout.dataset.menuLayout === 'list');
@@ -172,6 +318,38 @@ document.querySelector('#view-menu')?.addEventListener('click', (event) => {
     document.querySelector('#menu-search').focus();
   }
 });
+
+document.querySelector('#view-menu')?.addEventListener('dragstart', (event) => {
+  if (!menuOrderEditing) return;
+  const card = event.target.closest('.menu-item-card[data-product-id]');
+  if (!card) return;
+  draggedMenuProductId = card.dataset.productId;
+  card.classList.add('is-dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', draggedMenuProductId);
+});
+
+document.querySelector('#view-menu')?.addEventListener('dragover', (event) => {
+  if (!menuOrderEditing || !draggedMenuProductId) return;
+  updateMenuDragScroll(event.clientY);
+  const card = event.target.closest('.menu-item-card[data-product-id]');
+  if (!card || card.dataset.productId === draggedMenuProductId) return;
+  event.preventDefault();
+  const grid = card.parentElement;
+  const dragged = grid.querySelector(`[data-product-id="${CSS.escape(draggedMenuProductId)}"]`);
+  if (!dragged) return;
+  const before = event.clientY < card.getBoundingClientRect().top + card.offsetHeight / 2;
+  grid.insertBefore(dragged, before ? card : card.nextElementSibling);
+});
+
+document.querySelector('#view-menu')?.addEventListener('dragend', (event) => {
+  const card = event.target.closest('.menu-item-card[data-product-id]');
+  card?.classList.remove('is-dragging');
+  draggedMenuProductId = '';
+  stopMenuDragScroll();
+});
+
+document.querySelector('#view-menu')?.addEventListener('drop', stopMenuDragScroll);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && document.body.classList.contains('customer-menu')) toggleCustomerMenu(false);
 });

@@ -32,13 +32,23 @@ function showUndoRemoval(item, nextSibling) {
 }
 
 document.addEventListener('click', (event) => {
+  const themeToggle = event.target.closest('[data-theme-toggle]');
+  if (themeToggle) {
+    const isDark = document.documentElement.dataset.theme === 'dark'
+      || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const nextTheme = isDark ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nextTheme;
+    localStorage.setItem('chao-theme', nextTheme);
+    updateThemeToggle();
+    return;
+  }
   const nav = event.target.closest('[data-view], [data-view-link]');
   if (nav) switchView(nav.dataset.view || nav.dataset.viewLink);
   const advance = event.target.closest('[data-advance]');
   if (advance) advanceOrder(advance.dataset.advance);
   if (event.target.closest('#new-order-button, #new-order-button-2')) openModal();
   if (event.target.closest('#new-client-button')) openClientModal();
-  if (event.target.closest('#view-menu .primary-button')) openProductModal();
+  if (event.target.closest('#view-menu .primary-button:not(#save-menu-order)')) openProductModal();
   const menuButton = event.target.closest('#view-menu .menu-tabs button');
   if (menuButton) {
     menuFilter = menuButton.dataset.folder || 'todos';

@@ -31,12 +31,13 @@
     shell.classList.toggle('sidebar-collapsed', collapsed);
     shell.classList.toggle('sidebar-open', drawerOpen);
     document.body.classList.toggle('navigation-open', drawerOpen);
-    sidebar.inert = mobile.matches && !drawerOpen;
-    sidebar.setAttribute('aria-hidden', String(mobile.matches && !drawerOpen));
+    const bottomNavigation = mobile.matches;
+    sidebar.inert = false;
+    sidebar.setAttribute('aria-hidden', 'false');
     shade.hidden = !drawerOpen;
-    const expanded = mobile.matches ? drawerOpen : !collapsed;
+    const expanded = bottomNavigation ? true : !collapsed;
     toggle.setAttribute('aria-expanded', String(expanded));
-    toggle.setAttribute('aria-label', mobile.matches ? 'Abrir menú de navegación' : expanded ? 'Plegar barra lateral' : 'Desplegar barra lateral');
+    toggle.setAttribute('aria-label', bottomNavigation ? 'Navegación inferior' : expanded ? 'Plegar barra lateral' : 'Desplegar barra lateral');
     toggle.title = toggle.getAttribute('aria-label');
   }
 
@@ -50,11 +51,7 @@
 
   toggle.addEventListener('click', () => {
     if (mobile.matches) {
-      mainWasInert = main.inert;
-      drawerOpen = true;
-      main.inert = true;
-      renderSidebar();
-      sidebar.querySelector('[data-sidebar-close]').focus({ preventScroll: true });
+      return;
     } else {
       collapsed = !collapsed;
       try { localStorage.setItem(preferenceKey, String(collapsed)); } catch { /* Keep the in-memory preference. */ }

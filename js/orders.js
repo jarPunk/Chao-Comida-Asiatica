@@ -97,7 +97,8 @@ function renderOrderProductOptions() {
   if (!select) return;
   renderOrderCatalog();
   const activeProducts = products.filter((product) => product.activo);
-  select.innerHTML = '<option value="">Selecciona un producto</option><optgroup label="Platos">' + activeProducts.filter((product) => product.tipo === 'PLATO' || product.tipo === 'EXTRA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup><optgroup label="Bebidas / refrescos">' + activeProducts.filter((product) => product.tipo === 'BEBIDA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup>';
+  const orderedProducts = sortProductsBySavedOrder(activeProducts);
+  select.innerHTML = '<option value="">Selecciona un producto</option><optgroup label="Platos">' + orderedProducts.filter((product) => product.tipo === 'PLATO' || product.tipo === 'EXTRA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup><optgroup label="Bebidas / refrescos">' + orderedProducts.filter((product) => product.tipo === 'BEBIDA').map((product) => `<option value="${product.id}">${product.nombre}</option>`).join('') + '</optgroup>';
 }
 
 function quantityOnlyProduct(product) {

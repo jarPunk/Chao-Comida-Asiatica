@@ -1,0 +1,93 @@
+#view-menu .menu-heading-actions { flex-wrap: wrap; }
+#view-menu .menu-item-card[data-product-id] { cursor: default; }
+#view-menu.is-order-editing .menu-item-card[data-product-id] { cursor: grab; }
+#view-menu.is-order-editing .menu-item-card[data-product-id]:active { cursor: grabbing; }
+#view-menu .menu-item-card.is-dragging { opacity: .42; border-color: var(--coral); }
+#view-menu.is-order-editing .menu-item-card[data-product-id]::before {
+  content: 'Arrastra para reordenar';
+  position: absolute;
+  z-index: 3;
+  top: 8px;
+  left: 8px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--panel);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+#view-menu.is-order-editing .menu-item-card[data-product-id] {
+  position: relative;
+  outline: 1px dashed var(--coral);
+  outline-offset: 3px;
+}
+#view-menu .menu-order-controls {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+#view-menu .menu-order-controls span {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+#view-menu .menu-order-controls button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper-subtle);
+  color: var(--ink);
+}
+#view-menu .menu-order-controls button:hover {
+  border-color: var(--coral);
+  background: var(--coral-soft);
+  color: var(--coral-dark);
+}
+#view-menu .menu-order-controls button:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+#view-menu .menu-order-controls svg { width: 15px; height: 15px; }
+#view-menu.dragging-near-top::before,
+#view-menu.dragging-near-bottom::after {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  width: min(360px, calc(100% - 32px));
+  padding: 8px 12px;
+  border: 1px solid var(--coral);
+  border-radius: 999px;
+  background: var(--coral);
+  color: #fffdf8;
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+#view-menu.dragging-near-top::before {
+  content: 'Sigue arriba para subir el producto';
+  top: 12px;
+}
+#view-menu.dragging-near-bottom::after {
+  content: 'Sigue abajo para bajar el producto';
+  bottom: 12px;
+}

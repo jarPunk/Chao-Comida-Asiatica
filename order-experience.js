@@ -79,7 +79,7 @@ function renderOrderCatalog() {
   const grid = document.querySelector('.order-catalog-grid');
   if (!grid) return;
   const category = document.querySelector('[data-order-category].active')?.dataset.orderCategory || 'platos';
-  const list = products.filter(p => p.activo && !p.menuOnly && (category === 'bebidas' ? p.tipo === 'BEBIDA' : category === 'extras' ? p.tipo === 'EXTRA' || isChickenExtra(p) : p.tipo === 'PLATO' && !isChickenExtra(p)));
+  const list = sortProductsBySavedOrder(products.filter(p => p.activo && !p.menuOnly && (category === 'bebidas' ? p.tipo === 'BEBIDA' : category === 'extras' ? p.tipo === 'EXTRA' || isChickenExtra(p) : p.tipo === 'PLATO' && !isChickenExtra(p))));
   const selectedItems = [...document.querySelectorAll('.selected-order-item')];
   const counts = selectedItems.reduce((result, item) => {
     const key = String(item.dataset.productId);

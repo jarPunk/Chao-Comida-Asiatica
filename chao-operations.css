@@ -1085,3 +1085,51 @@
     display: none;
   }
 }
+
+@media (max-width: 760px) {
+  #order-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  #order-modal .order-total-box {
+    position: static;
+    z-index: auto;
+    margin-top: 0;
+    padding-bottom: 12px;
+    background: var(--panel);
+  }
+  #order-modal .order-sticky-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    width: 100%;
+  }
+  #order-modal .order-sticky-bar .order-type-selection {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 6px;
+  }
+  #order-modal .order-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+  #order-modal .order-type-option {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 7px 8px;
+  }
+  #order-modal .order-type-option strong,
+  #order-modal .order-type-option small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  #order-modal .order-sticky-bar .payment-check {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

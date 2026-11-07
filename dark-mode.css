@@ -1,0 +1,489 @@
+/* Deliberate dark surfaces: elevation comes from tone, not heavy shadows. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --paper: #f7f2e9;
+  --paper-subtle: #ece5d8;
+  --panel: #fffdf8;
+  --ink: #202822;
+  --muted: #5c675e;
+  --line: #d8d0c1;
+  --control-line: #7d887c;
+  --coral: #c44832;
+  --coral-dark: #9f3023;
+  --coral-soft: #f9e8e1;
+  --coral-glow: rgb(196 72 50 / 14%);
+  --gold: #98773a;
+  --gold-dark: #6f5629;
+  --gold-soft: #f3ead4;
+  --line-gold: #dfd1b3;
+  --mint: #e1eee5;
+  --sage: #2f6a50;
+  --yellow: #805a1d;
+  --amber-soft: #f5ead0;
+  --success-ink: #2f6a50;
+  --success-surface: #e1eee5;
+  --success-line: #b5d2bd;
+  --warning-ink: #805a1d;
+  --warning-surface: #f5ead0;
+  --warning-line: #d8bf82;
+  --info-ink: #315b57;
+  --info-surface: #e4efed;
+  --info-line: #bdd3ce;
+  --shadow-sm: 0 2px 10px rgb(32 40 34 / 7%);
+  --shadow: 0 12px 32px rgb(32 40 34 / 10%);
+  --shadow-hover: 0 18px 40px rgb(32 40 34 / 14%);
+}
+
+:root[data-theme="light"] body,
+:root[data-theme="light"] .app-shell,
+:root[data-theme="light"] .main-content,
+:root[data-theme="light"] .topbar,
+:root[data-theme="light"] .login-screen {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] #main-sidebar,
+:root[data-theme="light"] .login-story {
+  background: var(--ink);
+}
+
+:root[data-theme="light"] .topbar {
+  background: rgb(247 242 233 / 92%);
+  border-color: var(--line);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .metric-grid,
+:root[data-theme="light"] .client-summary,
+:root[data-theme="light"] .table-panel,
+:root[data-theme="light"] .board-card,
+:root[data-theme="light"] .metric-card,
+:root[data-theme="light"] .login-card,
+:root[data-theme="light"] .menu-item-card {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="light"] .metric-card.highlight {
+  background: linear-gradient(145deg, #29372d, #202822);
+  color: #fffdf8;
+}
+
+:root[data-theme="light"] .secondary-button,
+:root[data-theme="light"] .icon-button,
+:root[data-theme="light"] .profile-chip,
+:root[data-theme="light"] .search-field,
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea {
+  background: #fffdf8;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] th,
+:root[data-theme="light"] .order-column,
+:root[data-theme="light"] .stats-list,
+:root[data-theme="light"] .segmented-control,
+:root[data-theme="light"] .menu-tabs,
+:root[data-theme="light"] .selected-order-item {
+  background: var(--paper-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] .theme-toggle {
+  color: var(--gold-dark);
+  border-color: var(--line-gold);
+  background: var(--gold-soft);
+}
+
+:root[data-theme="light"] .theme-toggle:hover {
+  background: #ead9ae;
+  color: #4f3d1b;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #101512;
+  --paper-subtle: #18211c;
+  --panel: #202b25;
+  --ink: #edf2e8;
+  --muted: #aab8aa;
+  --line: #34443a;
+  --control-line: #607066;
+  --coral: #d7654b;
+  --coral-dark: #f08a6d;
+  --coral-soft: #3a2521;
+  --coral-glow: rgb(215 101 75 / 24%);
+  --gold: #c7ad6f;
+  --gold-dark: #e0c989;
+  --gold-soft: #38321f;
+  --line-gold: #5a4f35;
+  --mint: #20342a;
+  --sage: #8fc29b;
+  --yellow: #e1ba70;
+  --amber-soft: #3a321f;
+  --success-ink: #9bd3a6;
+  --success-surface: #20342a;
+  --success-line: #3b5a46;
+  --warning-ink: #e5bf74;
+  --warning-surface: #3a321f;
+  --warning-line: #625338;
+  --info-ink: #a7cec3;
+  --info-surface: #24352f;
+  --info-line: #3b5950;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 22%);
+  --shadow: 0 14px 32px rgb(0 0 0 / 24%);
+  --shadow-hover: 0 18px 40px rgb(0 0 0 / 32%);
+}
+
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .app-shell,
+:root[data-theme="dark"] .main-content,
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .login-screen {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] #main-sidebar,
+:root[data-theme="dark"] .login-story {
+  background: #0b100d;
+}
+
+:root[data-theme="dark"] .topbar {
+  border-color: var(--line);
+  background: rgb(16 21 18 / 88%);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .metric-grid,
+:root[data-theme="dark"] .client-summary,
+:root[data-theme="dark"] .table-panel,
+:root[data-theme="dark"] .board-card,
+:root[data-theme="dark"] .metric-card,
+:root[data-theme="dark"] .login-card,
+:root[data-theme="dark"] .menu-item-card {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="dark"] .metric-card.highlight {
+  background: linear-gradient(145deg, #263d30, #1b2b22);
+}
+
+:root[data-theme="dark"] .secondary-button,
+:root[data-theme="dark"] .icon-button,
+:root[data-theme="dark"] .profile-chip,
+:root[data-theme="dark"] .search-field,
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background: #1a251f;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .secondary-button:hover,
+:root[data-theme="dark"] .icon-button:hover,
+:root[data-theme="dark"] .profile-chip:hover {
+  background: #29382f;
+  border-color: #587261;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] th,
+:root[data-theme="dark"] .order-column,
+:root[data-theme="dark"] .stats-list,
+:root[data-theme="dark"] .segmented-control,
+:root[data-theme="dark"] .menu-tabs,
+:root[data-theme="dark"] .selected-order-item {
+  background: var(--paper-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] tbody tr:hover,
+:root[data-theme="dark"] .order-row:hover,
+:root[data-theme="dark"] .metric-card:hover,
+:root[data-theme="dark"] .board-card:hover,
+:root[data-theme="dark"] .menu-item-card:hover {
+  background: #26352c;
+}
+
+:root[data-theme="dark"] .modal-backdrop {
+  background: rgb(0 0 0 / 72%);
+  backdrop-filter: blur(8px);
+}
+
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .modal .modal-footer,
+:root[data-theme="dark"] .modal .modal-body {
+  background: #1b2720;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .account-dropdown,
+:root[data-theme="dark"] .client-results {
+  background: #26352c;
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+:root[data-theme="dark"] .toast {
+  background: #26352c;
+  border-color: #587261;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .theme-toggle {
+  color: var(--gold-dark);
+  border-color: #6a5a36;
+  background: #2b291e;
+}
+
+:root[data-theme="dark"] .theme-toggle:hover {
+  background: #403923;
+  color: #f0d48d;
+}
+
+:root[data-theme="light"] .sidebar-shade {
+  background: rgb(32 40 34 / 32%);
+}
+
+:root[data-theme="light"] .modal-backdrop .modal,
+:root[data-theme="light"] .modal .modal-header,
+:root[data-theme="light"] .modal .modal-body,
+:root[data-theme="light"] .modal .modal-footer,
+:root[data-theme="light"] .modal .order-details,
+:root[data-theme="light"] .modal .order-notes,
+:root[data-theme="light"] .modal .order-product-card,
+:root[data-theme="light"] .modal .quantity-stepper button,
+:root[data-theme="light"] .modal .drink-color-option,
+:root[data-theme="light"] .modal .checkbox-label,
+:root[data-theme="light"] .modal .payment-check {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] .modal .modal-body {
+  background: var(--paper);
+}
+
+:root[data-theme="light"] #order-modal .modal h2,
+:root[data-theme="light"] #order-modal .modal label,
+:root[data-theme="light"] #order-modal .modal legend,
+:root[data-theme="light"] #order-modal .modal summary,
+:root[data-theme="light"] #order-modal .order-type-option,
+:root[data-theme="light"] #order-modal .order-type-option strong,
+:root[data-theme="light"] #order-modal .order-type-option small,
+:root[data-theme="light"] #order-modal .payment-check,
+:root[data-theme="light"] #order-modal .order-card-name,
+:root[data-theme="light"] #order-modal .order-card-price,
+:root[data-theme="light"] #order-modal .order-details > summary strong,
+:root[data-theme="light"] #order-modal .order-notes > summary strong {
+  color: var(--ink);
+}
+
+:root[data-theme="light"] #order-modal .order-details > summary span,
+:root[data-theme="light"] #order-modal .order-notes > summary span,
+:root[data-theme="light"] #order-modal .order-type-option small,
+:root[data-theme="light"] #order-modal .order-card-description,
+:root[data-theme="light"] #order-modal .order-type-selection legend {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] #order-modal .order-card-price {
+  color: var(--coral-dark);
+}
+
+:root[data-theme="light"] #order-modal .modal-close {
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .order-category-filters button {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] #order-modal .order-category-filters button {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] .order-category-filters button.active,
+:root[data-theme="light"] .segmented-control button.active,
+:root[data-theme="light"] .menu-tabs button.active {
+  background: var(--coral);
+  color: #fffdf8;
+  border-color: var(--coral);
+}
+
+:root[data-theme="light"] #order-modal .order-category-filters button.active {
+  background: var(--coral);
+  color: #fffdf8;
+  border-color: var(--coral);
+}
+
+:root[data-theme="light"] .modal .drink-color-option:has(:checked) {
+  background: var(--coral-soft);
+  border-color: var(--coral);
+}
+
+:root[data-theme="dark"] .modal-backdrop .modal,
+:root[data-theme="dark"] .modal .modal-header,
+:root[data-theme="dark"] .modal .modal-body,
+:root[data-theme="dark"] .modal .modal-footer,
+:root[data-theme="dark"] .modal .order-details,
+:root[data-theme="dark"] .modal .order-notes,
+:root[data-theme="dark"] .modal .order-product-card,
+:root[data-theme="dark"] .modal .quantity-stepper button,
+:root[data-theme="dark"] .modal .drink-color-option,
+:root[data-theme="dark"] .modal .checkbox-label,
+:root[data-theme="dark"] .modal .payment-check {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .modal .modal-body {
+  background: var(--paper);
+}
+
+:root[data-theme="dark"] .modal .order-product-card[data-kind="drink"] {
+  background: var(--info-surface);
+  border-color: var(--info-line);
+}
+
+:root[data-theme="dark"] #order-modal .order-product-card,
+:root[data-theme="dark"] #order-modal .quantity-stepper button,
+:root[data-theme="dark"] #order-modal .order-details,
+:root[data-theme="dark"] #order-modal .order-notes,
+:root[data-theme="dark"] #order-modal .selected-order-item {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] #order-modal .modal,
+:root[data-theme="dark"] #order-modal .modal-header,
+:root[data-theme="dark"] #order-modal .modal-body,
+:root[data-theme="dark"] #order-modal .modal-footer,
+:root[data-theme="dark"] #order-modal .order-sticky-bar {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] #order-modal .modal-body {
+  background: var(--paper);
+}
+
+:root[data-theme="dark"] #order-modal .order-product-card[data-kind="drink"] {
+  background: var(--info-surface);
+  border-color: var(--info-line);
+}
+
+:root[data-theme="light"] #order-modal .order-product-card,
+:root[data-theme="light"] #order-modal .quantity-stepper button,
+:root[data-theme="light"] #order-modal .order-details,
+:root[data-theme="light"] #order-modal .order-notes,
+:root[data-theme="light"] #order-modal .selected-order-item {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] #order-modal .modal,
+:root[data-theme="light"] #order-modal .modal-header,
+:root[data-theme="light"] #order-modal .modal-body,
+:root[data-theme="light"] #order-modal .modal-footer,
+:root[data-theme="light"] #order-modal .order-sticky-bar {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="light"] #order-modal .modal-body {
+  background: var(--paper);
+}
+
+:root[data-theme="dark"] .order-category-filters button,
+:root[data-theme="dark"] .segmented-control button,
+:root[data-theme="dark"] .menu-tabs button {
+  background: var(--paper-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] #order-modal .order-category-filters button {
+  background: var(--paper-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .order-category-filters button.active,
+:root[data-theme="dark"] .segmented-control button.active,
+:root[data-theme="dark"] .menu-tabs button.active {
+  background: var(--coral);
+  color: #fffdf8;
+  border-color: var(--coral);
+}
+
+:root[data-theme="dark"] #order-modal .order-category-filters button.active {
+  background: var(--coral);
+  color: #fffdf8;
+  border-color: var(--coral);
+}
+
+:root[data-theme="dark"] .modal .drink-color-option:has(:checked) {
+  background: var(--coral-soft);
+  border-color: var(--coral);
+}
+
+:root[data-theme="dark"] .modal .modal-body input::placeholder,
+:root[data-theme="dark"] .modal .modal-body textarea::placeholder {
+  color: #91a197;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .modal .modal-header,
+  :root:not([data-theme="light"]) .modal .modal-body,
+  :root:not([data-theme="light"]) .modal .modal-footer,
+  :root:not([data-theme="light"]) .modal .order-details,
+  :root:not([data-theme="light"]) .modal .order-notes,
+  :root:not([data-theme="light"]) .modal .order-product-card,
+  :root:not([data-theme="light"]) .modal .quantity-stepper button,
+  :root:not([data-theme="light"]) .modal .drink-color-option,
+  :root:not([data-theme="light"]) .modal .checkbox-label,
+  :root:not([data-theme="light"]) .modal .payment-check {
+    background: var(--panel);
+    color: var(--ink);
+    border-color: var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .app-shell,
+  .panel,
+  .metric-card,
+  .topbar,
+  .modal,
+  .icon-button {
+    transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease, box-shadow 220ms ease;
+  }
+}

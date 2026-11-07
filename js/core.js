@@ -100,6 +100,19 @@ function isDefaultSizeName(name) {
 }
 
 function refreshIcons() { if (window.lucide) window.lucide.createIcons(); }
+
+function updateThemeToggle() {
+  const toggle = document.querySelector('[data-theme-toggle]');
+  if (!toggle) return;
+  const isDark = document.documentElement.dataset.theme === 'dark'
+    || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  toggle.setAttribute('aria-label', isDark ? 'Activar modo claro' : 'Activar modo oscuro');
+  toggle.title = isDark ? 'Activar modo claro' : 'Activar modo oscuro';
+  toggle.innerHTML = `<i data-lucide="${isDark ? 'sun' : 'moon'}"></i>`;
+  refreshIcons();
+}
+
+updateThemeToggle();
 function showToast(message = 'Pedido actualizado') {
   const toast = document.querySelector('#toast');
   toast.querySelector('span').textContent = message;
