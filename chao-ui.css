@@ -265,7 +265,8 @@ tbody tr:hover { background: var(--paper); }
     line-height: 1.1;
     text-align: center;
   }
-  #main-sidebar .main-nav .nav-item svg { width: 19px; height: 19px; }
+  #main-sidebar .main-nav .nav-item > span { display: none; }
+  #main-sidebar .main-nav .nav-item svg { width: 24px; height: 24px; stroke-width: 2.2; }
   #main-sidebar .main-nav .nav-item.active { background: var(--coral); color: #fffdf8; }
   #main-sidebar .main-nav .nav-item:hover { background: #384036; }
   #main-sidebar .main-nav .nav-count {

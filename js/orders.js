@@ -85,8 +85,12 @@ function addOrderBuilder(form) {
   const field = document.createElement('div');
   field.dataset.orderItems = 'true';
   field.className = 'order-items-builder';
-  field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total del pedido</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
+  field.innerHTML = '<div class="order-item-row"><label>Producto<select class="order-product"><option value="">Selecciona un producto</option></select></label><label data-size-control hidden>Tamaño<select class="order-size" disabled><option>Selecciona</option></select></label><label data-preparation-control hidden>Preparación<select class="order-preparation"><option value="">Opcional</option></select></label><label>Cantidad<input class="order-quantity" type="number" min="1" value="1" /></label><button type="button" class="secondary-button add-order-item" aria-label="Añadir producto"><i data-lucide="plus"></i></button></div><div class="selected-order-items"></div><div class="order-total-box"><span>Total</span><strong>Bs 0.00</strong></div><p class="form-error order-form-error"></p>';
   form.querySelector('.modal-body').insertBefore(field, form.querySelector('.order-notes'));
+  const totalBox = field.querySelector('.order-total-box');
+  const stickyBar = document.querySelector('#order-modal .order-sticky-bar');
+  const paidToggle = document.querySelector('#order-modal .payment-check');
+  if (totalBox && stickyBar && paidToggle) stickyBar.insertBefore(totalBox, paidToggle);
   setupOrderCatalog(field);
   renderOrderProductOptions();
   refreshIcons();

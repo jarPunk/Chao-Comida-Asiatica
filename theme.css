@@ -38,6 +38,7 @@
 }
 body, .app-shell { background: var(--paper); }
 button, input, select, textarea { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease; }
+[hidden] { display: none !important; }
 .panel, .metric-card, .board-card { border-color: var(--line); }
 .primary-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .secondary-button:focus-visible, .icon-button:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; }
@@ -95,11 +96,17 @@ button, input, select, textarea { transition: background-color 160ms ease, borde
 .segmented-control button, .menu-tabs button { color: #526175; font-weight: 600; }
 .segmented-control button.active, .menu-tabs button.active { color: var(--coral-dark); box-shadow: 0 1px 4px #29332e0a; }
 .search-field, .modal input, .modal select, .modal textarea, .login-card input, .size-row input, .order-item-row input, .order-item-row select { background: #fafbfd; border-color: var(--line); color: var(--ink); }
+.search-field { position: relative; }
+.search-field:has(.client-search-clear) input { padding-right: 34px; }
+.client-search-clear { position: absolute; top: 50%; right: 8px; z-index: 1; display: grid; width: 30px; height: 30px; place-items: center; padding: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; transform: translateY(-50%); }
+.client-search-clear:hover, .client-search-clear:focus-visible { background: var(--paper-subtle); color: var(--coral-dark); }
 input::placeholder, textarea::placeholder, .search-field input::placeholder { color: #667386; }
 .selected-order-item { background: var(--paper-subtle); color: var(--ink); }
 .size-row .remove-size, .remove-order-item, .payment-status:hover { background: var(--coral-soft); }
 th { background: #f7f9fc; color: var(--muted); }
 tbody tr:hover, .order-row:hover { background: #f7f9fc; transform: none; }
+#view-clientes .table-panel { overflow-x: auto; }
+#view-clientes table { min-width: 920px; }
 .peach { background: var(--coral-soft); color: var(--coral-dark); border-color: #ebd9d4; }
 .lavender { background: #edf0f3; color: #526575; }
 .menu-category { background: var(--coral-soft); color: var(--coral-dark); border-color: #ebd9d4; }
@@ -224,10 +231,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .table-panel { overflow-x: auto; }
   .table-toolbar { gap: 12px; padding: 16px; }
   .search-field { width: 100%; min-width: 0; }
+  #view-clientes .table-toolbar { align-items: stretch; flex-wrap: wrap; }
+  #view-clientes .table-toolbar .search-field { flex: 1 1 100%; width: auto; }
+  #view-clientes .table-toolbar .date-picker { flex: 1 1 0; min-width: 0; }
+  #view-clientes .table-toolbar [data-clear-client-date] { flex: 0 0 auto; }
   .client-summary { gap: 10px; }
   .client-summary > div { padding: 16px 12px; }
   .client-summary strong { font-size: 23px; }
   .client-summary span { font-size: 11px; }
+  #view-clientes table.is-empty { min-width: 0; table-layout: fixed; }
+  #view-clientes table.is-empty thead { display: none; }
+  #view-clientes table.is-empty tbody,
+  #view-clientes table.is-empty tbody tr,
+  #view-clientes table.is-empty tbody td { display: block; width: 100%; }
 }
 @media (min-width: 761px) {
   .sidebar { position: sticky; top: 0; height: 100dvh; overflow-y: auto; }

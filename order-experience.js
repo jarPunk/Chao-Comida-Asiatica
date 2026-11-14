@@ -3,7 +3,7 @@ function setupOrderTypeSelection() {
   if (!select) return;
   const fieldset = document.createElement('fieldset');
   fieldset.className = 'order-type-selection';
-  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option"><input type="radio" name="tipo_pedido" form="order-form" value="Para llevar" checked><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option"><input type="radio" name="tipo_pedido" form="order-form" value="En mesa"><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
+  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option" title="Para llevar"><input type="radio" name="tipo_pedido" form="order-form" value="Para llevar" checked><i class="order-type-icon" data-lucide="shopping-bag" aria-hidden="true"></i><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option" title="En mesa"><input type="radio" name="tipo_pedido" form="order-form" value="En mesa"><i class="order-type-icon" data-lucide="armchair" aria-hidden="true"></i><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
   select.closest('label').replaceWith(fieldset);
   const form = document.querySelector('#order-form');
   const paid = form.querySelector('.payment-check');
@@ -14,7 +14,9 @@ function setupOrderTypeSelection() {
   bar.className = 'order-sticky-bar';
   header.append(bar);
   bar.append(fieldset, paid);
+  paid.insertAdjacentHTML('afterbegin', '<i class="payment-icon" data-lucide="badge-check" aria-hidden="true"></i>');
   paid.querySelector('input').setAttribute('form', 'order-form');
+  window.refreshIcons && window.refreshIcons();
 }
 
 setupOrderTypeSelection();

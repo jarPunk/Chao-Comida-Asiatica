@@ -96,6 +96,17 @@ function formatClientDate(value) {
   return new Intl.DateTimeFormat('es-BO', { timeZone: 'America/La_Paz', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
 }
 
+function normalizeClientSearch(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function clientMatchesSearch(client, term) {
+  if (!term) return true;
+  const nameParts = `${client.nombres} ${client.apellidos}`.split(/\s+/).map(normalizeClientSearch).filter(Boolean);
+  const phone = normalizeClientSearch(client.telefono);
+  return nameParts.some((part) => part.startsWith(term)) || phone.startsWith(term);
+}
+
 function renderClients() {
   const clientView = document.querySelector('#view-clientes');
   const body = clientView?.querySelector('table tbody');
@@ -104,14 +115,18 @@ function renderClients() {
   clientView.querySelector('.client-summary > div:first-child strong').textContent = active;
   clientView.querySelector('.client-summary > div:nth-child(2) strong').textContent = new Set(clients.filter((client) => client.familia_id).map((client) => client.familia_id)).size;
   clientView.querySelector('.client-summary > div:nth-child(3) strong').textContent = clients.filter((client) => String(client.telefono || '').trim()).length;
-  const term = clientView.querySelector('.table-toolbar .search-field input')?.value.trim().toLowerCase() || '';
+  const term = normalizeClientSearch(clientView.querySelector('.table-toolbar .search-field input')?.value);
+  const searchClear = clientView.querySelector('[data-clear-client-search]');
+  if (searchClear) searchClear.hidden = !term;
   const filtered = clients.filter((client) => {
     if (clientDateFilter && clientCreatedDay(client.created_at) !== clientDateFilter) return false;
-    if (term && !`${client.nombres} ${client.apellidos} ${client.telefono || ''}`.toLowerCase().includes(term)) return false;
+    if (!clientMatchesSearch(client, term)) return false;
     return true;
   });
   const clearBtn = clientView.querySelector('[data-clear-client-date]');
   if (clearBtn) clearBtn.hidden = !clientDateFilter && !term;
+  const table = clientView.querySelector('table');
+  if (table) table.classList.toggle('is-empty', filtered.length === 0);
   body.innerHTML = filtered.length
     ? filtered.map((client) => `<tr>
         <td><div class="table-person"><span class="avatar peach">${(client.nombres[0] || '').toUpperCase()}${(client.apellidos[0] || '').toUpperCase()}</span><strong>${client.nombres} ${client.apellidos}</strong></div></td>

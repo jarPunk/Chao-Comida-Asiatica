@@ -93,6 +93,14 @@ document.addEventListener('click', (event) => {
   
   const editClient = event.target.closest('[data-edit-client]');
   if (editClient) openClientModal(clients.find((client) => String(client.id) === String(editClient.dataset.editClient)));
+  if (event.target.closest('[data-clear-client-search]')) {
+    const clientSearch = document.querySelector('#view-clientes .table-toolbar .search-field input');
+    if (clientSearch) {
+      clientSearch.value = '';
+      renderClients();
+      clientSearch.focus();
+    }
+  }
   if (event.target.closest('[data-deactivate-client]')) deactivateClient(document.querySelector('#client-form [name="id"]').value);
   const deleteClientBtn = event.target.closest('[data-delete-client], [data-delete-client-perm]');
   if (deleteClientBtn) deleteClientPermanently(deleteClientBtn.dataset.deleteClient || document.querySelector('#client-form [name="id"]').value);
