@@ -277,22 +277,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .sidebar-collapsed .main-content { width: calc(100% - 80px); }
 }
 @media (max-width: 760px) {
-  body { padding-bottom: 0; }
-  body.navigation-open { overflow: hidden; }
-  #main-sidebar { display: flex; position: fixed; inset: 0 auto 0 0; width: min(288px, calc(100vw - 48px)); height: 100dvh; padding: 26px 20px 20px; overflow-y: auto; z-index: 70; background: var(--panel); border-right: 1px solid var(--line); box-shadow: 12px 0 40px #18223024; transform: translateX(-105%); visibility: hidden; transition: transform 180ms ease, visibility 180ms; }
-  .sidebar-open #main-sidebar { transform: translateX(0); visibility: visible; }
-  #main-sidebar { border-top: 0; }
-  #main-sidebar > .brand, #main-sidebar > .service-status { display: flex; }
-  #main-sidebar > .sidebar-bottom { display: block; }
-  #main-sidebar .main-nav { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  #main-sidebar .main-nav .nav-item { justify-content: flex-start; flex-direction: row; gap: 13px; padding: 12px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; text-align: left; }
-  #main-sidebar .main-nav .nav-count { position: static; margin-left: auto; transform: none; padding: 3px 7px; font-size: 11px; }
-  .sidebar .brand { padding-right: 36px; }
-  .sidebar .brand div span { font-size: 9px; }
-  .sidebar-close { display: grid; position: absolute; top: 24px; right: 14px; width: 44px; height: 44px; }
-  .sidebar-shade:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 69; background: rgb(24 34 48 / 40%); border: 0; border-radius: 0; padding: 0; }
   .topbar { gap: 10px; }
-  .sidebar-toggle { margin-right: 0; }
+  .sidebar-toggle { display: none; margin-right: 0; }
   .mobile-brand { margin-right: auto; }
   .topbar-actions { gap: 8px; }
   .topbar-actions > .icon-button[aria-label="Buscar"] { display: none; }

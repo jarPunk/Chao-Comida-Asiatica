@@ -8,7 +8,10 @@ const supabaseClient = window.supabase && supabaseConfig.url && supabaseConfig.a
 let isAuthenticated = !supabaseClient;
 const statusOrder = ['pendiente', 'preparacion', 'listo'];
 const statusLabels = { pendiente: 'Pendiente', preparacion: 'En preparación', listo: 'Listo', entregado: 'Entregado' };
-const iconForType = (type) => type.startsWith('Mesa') ? 'armchair' : 'shopping-bag';
+const isDineInType = (type) => /^(mesa\b|en mesa\b)/i.test(String(type || '').trim());
+const iconForType = (type) => isDineInType(type) ? 'armchair' : 'shopping-bag';
+const serviceClassForType = (type) => isDineInType(type) ? 'service-dinein' : 'service-takeout';
+const serviceLabelForType = (type) => isDineInType(type) ? (String(type).trim() === 'Mesa' ? 'En mesa' : type) : 'Para llevar';
 let products = [];
 let clients = [];
 let families = [];

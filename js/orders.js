@@ -251,21 +251,29 @@ function orderItemsMarkup(order) {
     const productName = detail.productos?.nombre || '';
     return products.find((item) => item.nombre === productName)?.tipo === 'BEBIDA';
   };
-  if (!order.details.some(isDrinkDetail)) {
-    const dishes = order.details.map(itemMarkup).join('');
-    return `<div class="order-items-divider is-dish" role="separator"><span>Platos</span></div><div class="order-dishes">${dishes}</div>`;
+  const dishes = order.details.filter((detail) => !isDrinkDetail(detail));
+  const drinks = order.details.filter(isDrinkDetail);
+  const sections = [];
+  if (dishes.length) {
+    sections.push(`<div class="order-items-divider is-dish" role="separator"><span>Platos</span></div><div class="order-dishes">${dishes.map(itemMarkup).join('')}</div>`);
   }
-  const dishMarkup = order.details.filter((detail) => !isDrinkDetail(detail)).map(itemMarkup).join('');
-  const drinkMarkup = order.details.filter(isDrinkDetail).map(itemMarkup).join('');
-  return `<div class="order-items-divider is-dish" role="separator"><span>Platos</span></div><div class="order-dishes">${dishMarkup}</div><div class="order-items-divider is-drink" role="separator"><span>Refrescos</span></div><div class="order-drinks">${drinkMarkup}</div>`;
+  if (drinks.length) {
+    sections.push(`<div class="order-items-divider is-drink" role="separator"><span>Refrescos</span></div><div class="order-drinks">${drinks.map(itemMarkup).join('')}</div>`);
+  }
+  return sections.join('');
 }
 
 function orderMarkup(order, compact = false) {
+  const isDineIn = isDineInType(order.type);
+  const serviceClass = serviceClassForType(order.type);
+  const serviceIcon = iconForType(order.type);
+  const serviceText = order.type;
+
   if (compact) {
-    return `<article class="order-row" data-order-id="${order.id}">
+    return `<article class="order-row ${serviceClass}" data-order-id="${order.id}" data-service="${isDineIn ? 'mesa' : 'llevar'}">
       <span class="order-number">#${order.id.slice(-3)}</span>
       <div class="order-customer"><strong>${order.customer}</strong><div class="order-items">${orderItemsMarkup(order)}</div></div>
-      <span class="order-type"><i data-lucide="${iconForType(order.type)}"></i>${order.type}</span>
+      <span class="order-type service-badge ${serviceClass}"><i data-lucide="${serviceIcon}"></i><span>${serviceText}</span></span>
       <strong class="order-total">${order.total}</strong>
       <button class="order-status status-${order.status}" data-advance="${order.id}">${order.label}</button>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
@@ -276,9 +284,10 @@ function orderMarkup(order, compact = false) {
     </article>`;
   }
   if (order.status === 'listo') {
-    return `<article class="board-card listo-mini status-${order.status}" data-order-id="${order.id}">
+    return `<article class="board-card listo-mini status-${order.status} ${serviceClass}" data-order-id="${order.id}" data-service="${isDineIn ? 'mesa' : 'llevar'}">
     <button type="button" class="mini-main" data-read-order="${order.id}" aria-label="Ver pedido ${order.id} completo">
       <span class="mini-number">#${order.id}</span>
+      <span class="service-pill-mini ${serviceClass}"><i data-lucide="${serviceIcon}"></i><span>${serviceText}</span></span>
       <strong class="mini-customer">${order.customer}</strong>
       <span class="mini-total">${order.total}</span>
     </button>
@@ -287,9 +296,12 @@ function orderMarkup(order, compact = false) {
     <button class="btn-action danger mini" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
   </article>`;
   }
-  return `<article class="board-card status-${order.status}" data-order-id="${order.id}">
+  return `<article class="board-card status-${order.status} ${serviceClass}" data-order-id="${order.id}" data-service="${isDineIn ? 'mesa' : 'llevar'}">
     <div class="board-card-top">
-      <span>#${order.id}</span>
+      <div class="ticket-service-group">
+        <span class="board-card-ticket">#${order.id}</span>
+        <span class="service-pill ${serviceClass}"><i data-lucide="${serviceIcon}"></i><span>${serviceText}</span></span>
+      </div>
       <div class="card-actions">
         <button class="btn-action" data-edit-order="${order.databaseId}" title="Editar pedido"><i data-lucide="pencil"></i></button>
         <button class="btn-action danger" data-delete-order-id="${order.databaseId}" title="Eliminar pedido"><i data-lucide="trash-2"></i></button>
@@ -299,7 +311,6 @@ function orderMarkup(order, compact = false) {
     <div class="board-card-bottom">
       <strong>${order.total}</strong>
       <button class="payment-status ${order.payment === 'PAGADO' ? 'paid' : 'unpaid'}" data-payment="${order.id}">${order.payment === 'PAGADO' ? 'Pagado' : 'Sin pagar'}</button>
-      <span class="order-service" title="${order.type}" aria-label="Tipo de pedido: ${order.type}"><i data-lucide="${iconForType(order.type)}"></i><span>${order.type}</span></span>
       <button class="check-button" data-advance="${order.id}"><i data-lucide="check"></i>${order.status === 'listo' ? 'Entregado' : 'Avanzar'}</button>
     </div>
   </article>`;

@@ -3,7 +3,7 @@ function setupOrderTypeSelection() {
   if (!select) return;
   const fieldset = document.createElement('fieldset');
   fieldset.className = 'order-type-selection';
-  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option" title="Para llevar"><input type="radio" name="tipo_pedido" form="order-form" value="Para llevar" checked><i class="order-type-icon" data-lucide="shopping-bag" aria-hidden="true"></i><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option" title="En mesa"><input type="radio" name="tipo_pedido" form="order-form" value="En mesa"><i class="order-type-icon" data-lucide="armchair" aria-hidden="true"></i><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
+  fieldset.innerHTML = '<legend>Tipo de pedido</legend><div class="order-type-options"><label class="order-type-option option-takeout" title="Para llevar"><input type="radio" name="tipo_pedido" form="order-form" value="Para llevar" checked><i class="order-type-icon" data-lucide="shopping-bag" aria-hidden="true"></i><span><strong>Para llevar</strong><small>Recoger en el local</small></span></label><label class="order-type-option option-dinein" title="En mesa"><input type="radio" name="tipo_pedido" form="order-form" value="En mesa"><i class="order-type-icon" data-lucide="armchair" aria-hidden="true"></i><span><strong>En mesa</strong><small>Servir en el local</small></span></label></div>';
   select.closest('label').replaceWith(fieldset);
   const form = document.querySelector('#order-form');
   const paid = form.querySelector('.payment-check');
@@ -38,12 +38,13 @@ function showOrderReading(id) {
     document.body.append(backdrop);
   }
   backdrop.querySelector('h2').textContent = `Pedido #${order.id}`;
-  const isDineIn = /^(mesa\b|en mesa\b)/i.test(order.type || '');
+  const isDineIn = isDineInType(order.type);
+  const serviceClass = serviceClassForType(order.type);
   const serviceLabel = isDineIn ? (order.type === 'Mesa' ? 'En mesa' : order.type) : order.type;
   const paid = order.payment === 'PAGADO';
   const serviceIcon = isDineIn ? '<path d="M4 10h16M6 10v10m12-10v10M8 10V4h8v6"/>' : '<path d="M5 7h14l1 13H4L5 7Zm4 0V5a3 3 0 0 1 6 0v2"/>';
   const paymentIcon = paid ? '<path d="m7 12 3 3 7-7"/>' : '<path d="M12 7v6m0 3h.01"/>';
-  backdrop.querySelector('.reading-status-bar').innerHTML = `<div class="reading-status reading-service"><dt>Tipo de pedido</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true">${serviceIcon}</svg><span>${menuEscape(serviceLabel)}</span></dd></div><div class="reading-status ${paid ? 'reading-paid' : 'reading-unpaid'}"><dt>Estado de pago</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/>${paymentIcon}</svg><span>${paid ? 'Pagado' : 'Sin pagar'}</span></dd></div>`;
+  backdrop.querySelector('.reading-status-bar').innerHTML = `<div class="reading-status reading-service ${serviceClass}"><dt>Tipo de pedido</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true">${serviceIcon}</svg><span>${menuEscape(serviceLabel)}</span></dd></div><div class="reading-status ${paid ? 'reading-paid' : 'reading-unpaid'}"><dt>Estado de pago</dt><dd><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/>${paymentIcon}</svg><span>${paid ? 'Pagado' : 'Sin pagar'}</span></dd></div>`;
   const lines = order.details?.length ? (() => {
     const itemMarkup = (detail) => {
       const productName = detail.productos?.nombre || 'Producto';

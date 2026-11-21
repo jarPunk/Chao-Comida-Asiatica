@@ -48,7 +48,7 @@ document.addEventListener('click', (event) => {
   if (advance) advanceOrder(advance.dataset.advance);
   if (event.target.closest('#new-order-button, #new-order-button-2')) openModal();
   if (event.target.closest('#new-client-button')) openClientModal();
-  if (event.target.closest('#view-menu .primary-button:not(#save-menu-order)')) openProductModal();
+  if (event.target.closest('#new-product-button, #view-menu .primary-button:not(#save-menu-order)')) openProductModal();
   const menuButton = event.target.closest('#view-menu .menu-tabs button');
   if (menuButton) {
     menuFilter = menuButton.dataset.folder || 'todos';

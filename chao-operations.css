@@ -91,10 +91,20 @@
   box-shadow: 0 3px 0 var(--line);
 }
 #view-pedidos .board-card-top { align-items: center; gap: 8px; color: var(--ink); }
-#view-pedidos .board-card-top > span { color: var(--coral-dark); font-family: var(--font-display, sans-serif); font-size: 18px; letter-spacing: .015em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+#view-pedidos .ticket-service-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+#view-pedidos .board-card-ticket { color: var(--coral-dark); font-family: var(--font-display, sans-serif); font-size: 18px; letter-spacing: .015em; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; }
 #view-pedidos .card-actions { gap: 6px; min-width: 0; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
 #view-pedidos .card-actions > span { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 #view-pedidos .card-actions .btn-action { min-width: 30px; width: 30px; height: 30px; border-radius: 4px; }
+#view-pedidos .service-badge, #view-inicio .service-badge { display: inline-flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; font-weight: 700; line-height: 1.2; }
+#view-pedidos .service-badge svg, #view-inicio .service-badge svg { flex: 0 0 14px; width: 14px; height: 14px; }
+#view-pedidos .service-badge.service-dinein, #view-inicio .service-badge.service-dinein { color: var(--info-ink); }
+#view-pedidos .service-badge.service-takeout, #view-inicio .service-badge.service-takeout { color: var(--coral-dark); }
+#view-pedidos .service-pill, #view-pedidos .service-pill-mini { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper-subtle); white-space: nowrap; }
+#view-pedidos .service-pill svg, #view-pedidos .service-pill-mini svg { flex: 0 0 14px; width: 14px; height: 14px; }
+#view-pedidos .service-pill.service-dinein, #view-pedidos .service-pill-mini.service-dinein { color: var(--info-ink); border-color: var(--info-line); background: var(--info-surface); }
+#view-pedidos .service-pill.service-takeout, #view-pedidos .service-pill-mini.service-takeout { color: var(--coral-dark); border-color: #e9c2b5; background: var(--coral-soft); }
+#view-pedidos .service-pill > span, #view-pedidos .service-pill-mini > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #view-pedidos .board-card h4 { font-size: 15px; line-height: 1.25; margin: 8px 0 6px; letter-spacing: -.01em; overflow-wrap: anywhere; }
 #view-pedidos .order-items { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 #view-pedidos .order-item-box { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 4px; background: var(--paper); overflow-wrap: anywhere; min-width: 0; }
@@ -190,25 +200,18 @@
 #view-inicio .order-item-box .opt-size { background: var(--paper-subtle); color: var(--ink); border-color: var(--line); }
 #view-inicio .order-item-box .opt-prep { background: var(--coral-soft); color: var(--coral-dark); border-color: #e9c2b5; }
 #view-pedidos .order-open-button { min-height: 28px; margin: 0 0 6px; padding: 2px 0; color: var(--coral-dark); font-size: 11.5px; text-decoration: underline; text-underline-offset: 3px; text-align: left; }
-#view-pedidos .board-card-bottom { gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px dashed var(--control-line); }
-#view-pedidos .board-card-bottom > strong { font-family: var(--font-body, inherit); font-size: 17px; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
-#view-pedidos .board-card-bottom .payment-status { margin: 0 0 0 auto; min-height: 34px; padding: 6px 8px; border-radius: 4px; font-size: 11px; }
-#view-pedidos .order-service {
-  display: inline-flex;
+#view-pedidos .board-card-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "total payment" "advance advance";
   align-items: center;
-  gap: 5px;
-  min-height: 34px;
-  padding: 6px 9px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--muted);
-  background: var(--paper-subtle);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--control-line);
 }
-#view-pedidos .order-service svg { width: 14px; height: 14px; color: var(--info-ink); }
-#view-pedidos .order-service + .check-button { margin-left: 0; }
+#view-pedidos .board-card-bottom > strong { grid-area: total; min-width: 0; font-family: var(--font-body, inherit); font-size: 17px; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+#view-pedidos .board-card-bottom .payment-status { grid-area: payment; justify-self: end; margin: 0; min-height: 34px; padding: 6px 8px; border-radius: 4px; font-size: 11px; }
+#view-pedidos .board-card-bottom .check-button { grid-area: advance; width: 100%; justify-content: center; }
 #view-pedidos .payment-status.paid { color: var(--success-ink); background: var(--success-surface); }
 #view-pedidos .payment-status.unpaid { color: var(--warning-ink); background: var(--warning-surface); }
 #view-pedidos .check-button { padding: 9px 10px; min-height: 36px; background: var(--ink); color: var(--panel); border-radius: 4px; font-size: 11px; }
@@ -598,11 +601,12 @@
   #order-modal .order-total-box { margin-top: 18px; }
 }
 @media (max-width: 760px) {
-  #view-pedidos .orders-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  #view-pedidos .orders-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
   #view-pedidos .order-column { min-height: 0; margin: 0; }
-  #view-pedidos .filter-bar { gap: 12px; padding: 12px 0; }
-  #view-pedidos .segmented-control { width: 100%; }
-  #view-pedidos .date-picker { margin-left: auto; }
+  #view-pedidos .filter-bar { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; align-items: stretch; }
+  #view-pedidos .segmented-control { display: flex; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 4px; }
+  #view-pedidos .segmented-control button { flex: 1 0 auto; text-align: center; }
+  #view-pedidos .date-picker { width: 100%; justify-content: center; margin: 0; }
   #view-pedidos .board-card { padding: 12px; }
   #view-menu .menu-toolbar { flex-wrap: wrap; }
   #view-menu .menu-search { flex: 1 1 100%; max-width: none; }
@@ -1343,9 +1347,7 @@
 }
 
 @media (min-width: 761px) {
-  #order-modal .order-type-selection legend,
-  #order-modal .order-type-option > span,
-  #order-modal .order-sticky-bar .payment-check > span {
+  #order-modal .order-type-selection legend {
     display: none !important;
   }
 
@@ -1481,16 +1483,16 @@
 
   #order-modal .order-sticky-bar {
     width: 100%;
-    max-width: 300px;
-    margin-inline: auto;
-    grid-template-columns: minmax(74px, 1.2fr) minmax(82px, .9fr) minmax(52px, .6fr);
+    max-width: 100%;
+    margin-inline: 0;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.95fr);
     align-items: center;
-    justify-content: center;
-    gap: 14px;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   #order-modal .order-type-options {
-    gap: 12px;
+    gap: 6px;
   }
 
   #order-modal .order-sticky-bar .order-total-box,

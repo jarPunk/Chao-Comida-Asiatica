@@ -8,7 +8,7 @@ function renderStats() {
   const chart = document.querySelector('.chart');
   if (chart) chart.innerHTML = '<div class="empty-state"><strong>Historial de ventas en preparación</strong><span>El gráfico estará disponible cuando se conecten los datos históricos.</span></div>';
   const chartPeriod = document.querySelector('.chart-period');
-  if (chartPeriod) chartPeriod.textContent = 'Día seleccionado';
+  if (chartPeriod) chartPeriod.textContent = selectedOrdersDate ? `Fecha: ${selectedOrdersDate}` : 'Día seleccionado';
 }
 
 
@@ -50,7 +50,18 @@ function switchView(view) {
   document.querySelectorAll('.nav-item[data-view]').forEach((item) => item.classList.toggle('active', item.dataset.view === view));
   const viewLabel = document.querySelector('#current-view-label');
   if (viewLabel) viewLabel.textContent = { inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', menu: 'Menú', estadisticas: 'Estadísticas' }[view] || 'Inicio';
-  if (view === 'pedidos') renderBoard();
+  if (view === 'inicio') {
+    if (typeof renderHomeOrders === 'function') renderHomeOrders();
+    if (typeof updateMetric === 'function') updateMetric();
+  } else if (view === 'pedidos') {
+    if (typeof renderBoard === 'function') renderBoard(document.querySelector('.segmented-control button.active')?.dataset.filter || 'todos');
+  } else if (view === 'clientes') {
+    if (typeof renderClients === 'function') renderClients();
+  } else if (view === 'menu') {
+    if (typeof renderProducts === 'function') renderProducts();
+  } else if (view === 'estadisticas') {
+    if (typeof renderStats === 'function') renderStats();
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
